@@ -1,0 +1,3 @@
+/* The extension's own styles: app's own tokens only (--dd-*). */
+.dd-hello-row { display: flex; flex-wrap: wrap; gap: .5rem; }
+.dd-hello-text { color: var(--dd-text-2); font-size: calc(13px * var(--dd-fs-ui)); margin-bottom: .75rem; }

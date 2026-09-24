@@ -1,0 +1,22 @@
+{
+  "sec_main": "Olá Mundo",
+  "hint_opens": "Ativada {n} vez(es) até agora (guardado no armazenamento da extensão).",
+  "lbl_greet": "Saudar ao trocar de chat",
+  "desc_greet": "Mostra um toast com o nome do personagem quando você abre um chat.",
+  "lbl_volume": "Volume de mentira",
+  "lbl_color": "Cor favorita",
+  "opt_red": "Vermelho",
+  "opt_blue": "Azul",
+  "btn_toast": "Toast",
+  "btn_modal": "Abrir modal",
+  "btn_confirm": "Perguntar",
+  "btn_close": "Fechar",
+  "toast_hi": "Olá da extensão!",
+  "toast_chat": "Abriu um chat com {name}.",
+  "confirm_q": "Você gosta de extensões?",
+  "said_yes": "Você disse sim.",
+  "said_no": "Você disse não.",
+  "modal_title": "Modal de teste",
+  "modal_chat": "O chat aberto tem {n} mensagem(ns).",
+  "modal_nochat": "Nenhum chat aberto."
+}

@@ -1,0 +1,3 @@
+# Bytes go to GitHub exactly as they are on disk: the app checks the
+# SHA-256 of every file it downloads, and a CRLF/LF conversion would break it.
+* -text

@@ -1,0 +1,3 @@
+#!/bin/sh
+# Refuses the push when tools/check-publish.mjs finds a problem.
+node tools/check-publish.mjs || exit 1
