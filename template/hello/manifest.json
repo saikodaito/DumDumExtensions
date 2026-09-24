@@ -4,7 +4,7 @@
     "en": "Hello World",
     "pt": "Olá Mundo"
   },
-  "version": "0.1.1",
+  "version": "0.1.2",
   "api": 1,
   "minApp": "1.28.1",
   "author": "saikodaito",
@@ -24,6 +24,7 @@
     "style.css"
   ],
   "icon": "icon.webp",
+  "banner": "banner.webp",
   "i18n": {
     "pt": "i18n/pt.json",
     "en": "i18n/en.json"

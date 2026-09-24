@@ -1,3 +1,7 @@
+## 0.1.2
+
+- Banner artwork.
+
 ## 0.1.1
 
 - New icon: the DumDum extension artwork.

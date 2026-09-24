@@ -4,7 +4,7 @@
     "en": "Hello World",
     "pt": "Olá Mundo"
   },
-  "version": "0.1.1",
+  "version": "0.1.2",
   "api": 1,
   "minApp": "1.28.1",
   "author": "saikodaito",
@@ -24,6 +24,7 @@
     "style.css"
   ],
   "icon": "icon.webp",
+  "banner": "banner.webp",
   "i18n": {
     "pt": "i18n/pt.json",
     "en": "i18n/en.json"
@@ -42,6 +43,7 @@
     "disable": false
   },
   "files": {
+    "banner.webp": "3d7931025193ad1bfd7c442f28d83502f28435689f3615333ba012e58b31f9e1",
     "i18n/en.json": "145bc4c8eb44a9c1886c2ec187bf05f8b6f72293dd71788e3f0e335b293d501a",
     "i18n/pt.json": "8036360312ba45852163060b1980160b4bbcff54830d6c5c1f757371dd7b5c02",
     "icon.webp": "bb237a1d1784dc63d2b7d67eaeef3f3db96220db5c562cffbf9a0129b824be95",

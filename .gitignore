@@ -1,2 +1,4 @@
 dist/
 node_modules/
+# Extensions in development (not reviewed yet): outside the index and the repo.
+dev/
