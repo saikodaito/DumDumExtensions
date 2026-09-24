@@ -9,7 +9,7 @@
 //   · files over 2 MB.
 // This is a safety net, not the review itself: every extension is still read
 // by a human before it is published.
-import { readFileSync, statSync } from 'node:fs';
+import { readFileSync, statSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { join } from 'node:path';
 import { ROOT, filesOf, listExtensions } from './lib.mjs';
@@ -19,10 +19,12 @@ const issues = [];
 const add = (file, msg) => issues.push(`${file}: ${msg}`);
 
 // Tracked + new files that are not ignored: exactly what a push would carry.
+// A tracked file already deleted on disk is on its way out, so it is skipped.
 let files;
 try {
     files = execSync('git ls-files -co --exclude-standard', { cwd: ROOT, encoding: 'utf8' })
-        .split('\n').map(s => s.trim()).filter(Boolean);
+        .split('\n').map(s => s.trim()).filter(Boolean)
+        .filter(f => existsSync(join(ROOT, f)));
 } catch (e) {
     console.error('✖ git ls-files failed: ' + e.message);
     process.exit(1);

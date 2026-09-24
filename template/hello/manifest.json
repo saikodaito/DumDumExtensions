@@ -1,17 +1,44 @@
 {
   "id": "hello",
-  "name": { "en": "Hello World", "pt": "Olá Mundo" },
-  "version": "0.1.0",
+  "name": {
+    "en": "Hello World",
+    "pt": "Olá Mundo"
+  },
+  "version": "0.1.1",
   "api": 1,
   "minApp": "1.28.1",
   "author": "saikodaito",
-  "summary": { "en": "Test extension: settings page, toast, modal, storage and i18n.", "pt": "Extensão de teste: página de configurações, toast, modal, armazenamento e i18n." },
-  "platforms": ["desktop", "mobile"],
+  "summary": {
+    "en": "Test extension: settings page, toast, modal, storage and i18n.",
+    "pt": "Extensão de teste: página de configurações, toast, modal, armazenamento e i18n."
+  },
+  "platforms": [
+    "desktop",
+    "mobile"
+  ],
   "defaultLang": "en",
-  "scripts": ["main.js"],
-  "styles": ["style.css"],
-  "icon": "icon.svg",
-  "i18n": { "pt": "i18n/pt.json", "en": "i18n/en.json" },
-  "permissions": { "network": [], "prompt": false, "chatRead": true, "ui": ["settings", "modal"] },
-  "restart": { "enable": false, "disable": false }
+  "scripts": [
+    "main.js"
+  ],
+  "styles": [
+    "style.css"
+  ],
+  "icon": "icon.webp",
+  "i18n": {
+    "pt": "i18n/pt.json",
+    "en": "i18n/en.json"
+  },
+  "permissions": {
+    "network": [],
+    "prompt": false,
+    "chatRead": true,
+    "ui": [
+      "settings",
+      "modal"
+    ]
+  },
+  "restart": {
+    "enable": false,
+    "disable": false
+  }
 }

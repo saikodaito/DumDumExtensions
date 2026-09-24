@@ -12,8 +12,8 @@
         "en": "Test extension: settings page, toast, modal, storage and i18n.",
         "pt": "Extensão de teste: página de configurações, toast, modal, armazenamento e i18n."
       },
-      "version": "0.1.0",
-      "tag": "hello-v0.1.0",
+      "version": "0.1.1",
+      "tag": "hello-v0.1.1",
       "api": 1,
       "minApp": "1.28.1",
       "platforms": [
@@ -22,7 +22,7 @@
       ],
       "author": "saikodaito",
       "defaultLang": "en",
-      "icon": "icon.svg",
+      "icon": "icon.webp",
       "banner": null,
       "restart": {
         "enable": false,
@@ -38,10 +38,10 @@
         ]
       },
       "files": {
-        "manifest.json": "5fa3137ea0ceb1487de19664ec478c8a8c669a6e45182613bc868bdd3c75d12c",
+        "manifest.json": "ae529d1b66d1737e83541ca10c29f1c6f6632371660b141346559c1d97075895",
         "i18n/en.json": "145bc4c8eb44a9c1886c2ec187bf05f8b6f72293dd71788e3f0e335b293d501a",
         "i18n/pt.json": "8036360312ba45852163060b1980160b4bbcff54830d6c5c1f757371dd7b5c02",
-        "icon.svg": "50d538c4e7b7fecc3590fdf6b51d0487aa2eafaa43936eda3820c3aa39e65f43",
+        "icon.webp": "bb237a1d1784dc63d2b7d67eaeef3f3db96220db5c562cffbf9a0129b824be95",
         "main.js": "947069ec1918ffa97c73f419faee287e72dd51b657d991d705e1b5d914f751b8",
         "style.css": "cd2771f97770c7699b1ab592ae742fb060f4e9d7ea68cdc973ad7225de289fe5"
       }
