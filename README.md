@@ -1,7 +1,7 @@
 # DumDumExtensions
 
-Official extensions for DumDum. The app lists them in its Extension Browser
-(menu, after turning on Settings > Extensions) and installs them from here.
+Official extensions for DumDum. The app lists them in its Extension Browser 
+and installs them from here.
 
 ## How the app installs an extension
 
@@ -11,16 +11,16 @@ Official extensions for DumDum. The app lists them in its Extension Browser
 3. It checks the SHA-256 of every file twice: against `manifest.json` and
    against `index.json`. One mismatch and nothing is installed.
 
-An extension can also be installed from a `.dumext` file (a zip made by
-`tools/pack.mjs`). The app marks it **official** only when it is byte for byte
-an entry of this index; anything else gets a strong warning.
+An extension can also be installed from a `.dumext` file (a zip archive made 
+by `tools/pack.mjs`). The app marks it **official** only when it is byte for byte
+an entry of this index; anything else gets a warning.
 
 ## Trust model
 
 Extensions run inside the app with the same access the app has. There is no
 sandbox. What keeps users safe is that every extension in this repository is
-read by a human before it is published, and that the hashes make sure the app
-runs exactly that code. The permissions in a manifest are shown to the user,
+read before it is published, and that the hashes make sure the app runs 
+exactly that code. The permissions in a manifest are shown to the user,
 but the app does not enforce them.
 
 ## Layout
