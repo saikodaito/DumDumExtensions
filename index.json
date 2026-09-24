@@ -3,6 +3,55 @@
   "repo": "saikodaito/DumDumExtensions",
   "extensions": [
     {
+      "id": "blips",
+      "name": {
+        "en": "Voice Blips",
+        "pt": "Blips de voz"
+      },
+      "summary": {
+        "en": "Short sounds while the reply arrives, Undertale style: one tone for speech, another for actions, and a voice for each character.",
+        "pt": "Sons curtos enquanto a resposta chega, estilo Undertale: um tom para a fala, outro para as ações, e uma voz para cada personagem."
+      },
+      "version": "1.0.0",
+      "tag": "blips-v1.0.0",
+      "api": 1,
+      "minApp": "1.28.1",
+      "platforms": [
+        "desktop",
+        "mobile"
+      ],
+      "author": "saikodaito",
+      "defaultLang": "en",
+      "icon": "icon.webp",
+      "banner": "banner.webp",
+      "restart": {
+        "enable": false,
+        "disable": false
+      },
+      "permissions": {
+        "network": [],
+        "prompt": false,
+        "chatRead": true,
+        "ui": [
+          "settings",
+          "charEditor"
+        ]
+      },
+      "files": {
+        "manifest.json": "8efb461e4c096dc3ce85923da924230ff58cd6dea4e85987d105093ec220aaa9",
+        "banner.webp": "6b979f61a9e7c98e0fe6f7c3cf1835c2e971dabcadb74ec638122048757edb1f",
+        "codec.js": "4757c68d6b2208deaf4900106c6428e6fad8a30b00ca09c9a78028517196a975",
+        "editor.js": "5c7ae68f13aa193c8ac935512e463e39f18951ed04087f5ff33ffd13103a92a9",
+        "engine.js": "76f06c6d023a9c555fd8e79ae55daefaf2269694c6f5282536f63b34b70baa97",
+        "i18n/en.json": "1387787829fce44006785372c2b3bd573c7856480de71fab2544b9110d6a5a44",
+        "i18n/pt.json": "43ad39c9bf27468b44ca57e706a40d18029f418900ae7502b454e50a91400f1d",
+        "icon.webp": "ea10f6809225bf93800fc8278fd47f83e777b60448efe52b609a0e5251f284b6",
+        "main.js": "84aea7c5b067446767372cdcafbb762fec6d3802d585d3cbe501ad69a3964522",
+        "style.css": "f3e9ad7b78d6613c3a9363a27d0506f93238aefdfbe8a6a2c3d639e23cb29bba",
+        "synth.js": "d634b3ff27e54f60e9c387c98533c3b83d53bc5ab8c873ab9208d4470c8c4b4a"
+      }
+    },
+    {
       "id": "hello",
       "name": {
         "en": "Hello World",
