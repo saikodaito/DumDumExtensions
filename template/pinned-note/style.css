@@ -1,0 +1,11 @@
+/* App tokens only (--dd-*). */
+.dd-pn-text {
+    width: 100%;
+    resize: vertical;
+    background: var(--dd-sunk);
+    color: var(--dd-fg);
+    border: 1px solid rgb(var(--dd-veil) / .1);
+    border-radius: var(--dd-r);
+    padding: .5rem;
+    font-size: calc(13px * var(--dd-fs-ui));
+}

@@ -102,6 +102,43 @@ interface Dd {
         /** The app's fetch. Hosts outside manifest.permissions.network are refused. */
         fetch(url: string, init?: RequestInit): Promise<Response>;
     };
+
+    /** Prompt hooks. Both need "prompt": true in manifest.permissions; without it
+     *  they log a warning and do nothing. Each returns a function that unregisters it. */
+    prompt: {
+        /** Called once per reply (send, regenerate, continue; group chats go through send),
+         *  before the prompt is assembled. 3 s limit. What you return is shown in the
+         *  prompt inspector under your extension's name. The app has one token budget
+         *  for all extensions (Settings > Extensions), filled in install order: an
+         *  injection that does not fit is left out and shows crossed out. */
+        inject(fn: (ctx: DdPromptCtx) => DdInjection | DdInjection[] | null | void
+            | Promise<DdInjection | DdInjection[] | null | void>): () => void;
+        /** Called on the final reply text before it is saved (never while it streams),
+         *  without the reasoning. For continue, only the new piece. 3 s limit. Return the
+         *  new text; anything that is not a non-empty string keeps the text as it was. */
+        transform(fn: (text: string, ctx: DdPromptCtx & { partial?: boolean }) => string | Promise<string>): () => void;
+    };
+}
+
+interface DdPromptCtx {
+    chatId: string;
+    charId: string;           // in a group chat, the character who is replying
+    kind: 'send' | 'regen' | 'continue';
+    isGroup: boolean;
+    /** inject only: the messages before the reply (a copy). */
+    history?(): DdChatMessage[];
+}
+
+interface DdInjection {
+    text: string;             // {{char}} and {{user}} are replaced
+    /** 'system:end' (default): end of the system prompt.
+     *  'beforeHistory': its own message, right before the chat history.
+     *  'depth:N': its own message, N messages from the end of the history (0 = last). */
+    position?: 'system:end' | 'beforeHistory' | `depth:${number}`;
+    /** Role of the message ('beforeHistory' and 'depth:N' only). Default 'system'. */
+    role?: 'system' | 'user' | 'assistant';
+    /** Name in the prompt inspector. Default: the extension's name. */
+    label?: string;
 }
 
 declare const dd: Dd;

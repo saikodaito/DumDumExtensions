@@ -20,8 +20,9 @@ an entry of this index; anything else gets a warning.
 Extensions run inside the app with the same access the app has. There is no
 sandbox. What keeps users safe is that every extension in this repository is
 read before it is published, and that the hashes make sure the app runs 
-exactly that code. The permissions in a manifest are shown to the user,
-but the app does not enforce them.
+exactly that code. The permissions in a manifest are shown to the user.
+The app enforces two of them: `network` (hosts `dd.net.fetch` may reach) and
+`prompt` (without it, `dd.prompt` does nothing). The rest are informative.
 
 ## Layout
 
@@ -37,6 +38,7 @@ extensions/<id>/
   CHANGELOG.md          shown when updating
   test/                 optional, never downloaded by the app
 template/hello/         a small extension that uses most of the API
+template/pinned-note/   the prompt hooks (dd.prompt.inject / transform)
 tools/                  build-index, pack, check-publish
 ```
 

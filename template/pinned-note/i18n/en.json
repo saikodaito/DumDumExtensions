@@ -1,0 +1,14 @@
+{
+  "label": "Pinned note",
+  "sec_note": "Pinned note",
+  "ph_note": "Example: Keep the replies short and in the present tense.",
+  "hint_note": "Sent with every reply. {{char}} and {{user}} are replaced. Empty = nothing is added.",
+  "lbl_position": "Where it goes",
+  "opt_system": "End of the system prompt",
+  "opt_before": "Before the history",
+  "opt_depth": "Inside the history",
+  "lbl_depth": "Depth",
+  "fmt_depth": "{n} messages from the end",
+  "lbl_tidy": "Tidy blank lines",
+  "desc_tidy": "Collapses three or more line breaks in the reply into one blank line before it is saved."
+}

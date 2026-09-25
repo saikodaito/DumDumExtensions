@@ -1,0 +1,14 @@
+{
+  "label": "Nota fixa",
+  "sec_note": "Nota fixa",
+  "ph_note": "Exemplo: Respostas curtas e no presente.",
+  "hint_note": "Vai junto em toda resposta. {{char}} e {{user}} são trocados. Vazia = nada é somado.",
+  "lbl_position": "Onde entra",
+  "opt_system": "Fim do system prompt",
+  "opt_before": "Antes do histórico",
+  "opt_depth": "Dentro do histórico",
+  "lbl_depth": "Profundidade",
+  "fmt_depth": "{n} mensagens do fim",
+  "lbl_tidy": "Arrumar linhas em branco",
+  "desc_tidy": "Junta três ou mais quebras de linha da resposta em uma linha em branco antes de gravar."
+}

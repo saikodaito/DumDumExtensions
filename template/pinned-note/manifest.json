@@ -1,16 +1,16 @@
 {
-  "id": "hello",
+  "id": "pinned-note",
   "name": {
-    "en": "Hello World",
-    "pt": "Olá Mundo"
+    "en": "Pinned Note",
+    "pt": "Nota Fixa"
   },
-  "version": "0.1.2",
+  "version": "0.1.0",
   "api": 1,
   "minApp": "1.29.0",
   "author": "saikodaito",
   "summary": {
-    "en": "Test extension: settings page, toast, modal, storage and i18n.",
-    "pt": "Extensão de teste: página de configurações, toast, modal, armazenamento e i18n."
+    "en": "Example of the prompt hooks: a fixed note in every prompt.",
+    "pt": "Exemplo dos ganchos de prompt: uma nota fixa em todo prompt."
   },
   "platforms": [
     "desktop",
@@ -23,19 +23,16 @@
   "styles": [
     "style.css"
   ],
-  "icon": "icon.webp",
-  "banner": "banner.webp",
   "i18n": {
     "pt": "i18n/pt.json",
     "en": "i18n/en.json"
   },
   "permissions": {
     "network": [],
-    "prompt": false,
-    "chatRead": true,
+    "prompt": true,
+    "chatRead": false,
     "ui": [
-      "settings",
-      "modal"
+      "settings"
     ]
   },
   "restart": {
