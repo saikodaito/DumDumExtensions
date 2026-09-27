@@ -1,3 +1,17 @@
 #!/bin/sh
 # Refuses the push when tools/check-publish.mjs finds a problem.
+# check-publish reads the files ON DISK, but a push carries the COMMITS: with
+# uncommitted changes the local check passes on a tree nobody will receive
+# (that is how a stale index.json went out on 2026-09-25 and only CI noticed).
+# So the working tree has to match HEAD before the check means anything.
+if ! git diff --quiet HEAD --; then
+    echo "pre-push: uncommitted changes to tracked files; commit or stash them first:" >&2
+    git diff --name-only HEAD -- >&2
+    exit 1
+fi
+if [ -n "$(git ls-files --others --exclude-standard)" ]; then
+    echo "pre-push: untracked files that check-publish would review but the push would not carry:" >&2
+    git ls-files --others --exclude-standard >&2
+    exit 1
+fi
 node tools/check-publish.mjs || exit 1

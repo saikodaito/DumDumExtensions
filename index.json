@@ -50,51 +50,6 @@
         "style.css": "f3e9ad7b78d6613c3a9363a27d0506f93238aefdfbe8a6a2c3d639e23cb29bba",
         "synth.js": "d634b3ff27e54f60e9c387c98533c3b83d53bc5ab8c873ab9208d4470c8c4b4a"
       }
-    },
-    {
-      "id": "hello",
-      "name": {
-        "en": "Hello World",
-        "pt": "Olá Mundo"
-      },
-      "summary": {
-        "en": "Test extension: settings page, toast, modal, storage and i18n.",
-        "pt": "Extensão de teste: página de configurações, toast, modal, armazenamento e i18n."
-      },
-      "version": "0.1.2",
-      "tag": "hello-v0.1.2",
-      "api": 1,
-      "minApp": "1.28.1",
-      "platforms": [
-        "desktop",
-        "mobile"
-      ],
-      "author": "saikodaito",
-      "defaultLang": "en",
-      "icon": "icon.webp",
-      "banner": "banner.webp",
-      "restart": {
-        "enable": false,
-        "disable": false
-      },
-      "permissions": {
-        "network": [],
-        "prompt": false,
-        "chatRead": true,
-        "ui": [
-          "settings",
-          "modal"
-        ]
-      },
-      "files": {
-        "manifest.json": "2b2a43261bb2b689f0d3a8f024926e72d4174eb102421b7371aa08b55c5e1738",
-        "banner.webp": "3d7931025193ad1bfd7c442f28d83502f28435689f3615333ba012e58b31f9e1",
-        "i18n/en.json": "145bc4c8eb44a9c1886c2ec187bf05f8b6f72293dd71788e3f0e335b293d501a",
-        "i18n/pt.json": "8036360312ba45852163060b1980160b4bbcff54830d6c5c1f757371dd7b5c02",
-        "icon.webp": "bb237a1d1784dc63d2b7d67eaeef3f3db96220db5c562cffbf9a0129b824be95",
-        "main.js": "947069ec1918ffa97c73f419faee287e72dd51b657d991d705e1b5d914f751b8",
-        "style.css": "cd2771f97770c7699b1ab592ae742fb060f4e9d7ea68cdc973ad7225de289fe5"
-      }
     }
   ]
 }
