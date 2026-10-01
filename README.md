@@ -21,8 +21,9 @@ Extensions run inside the app with the same access the app has. There is no
 sandbox. What keeps users safe is that every extension in this repository is
 read before it is published, and that the hashes make sure the app runs 
 exactly that code. The permissions in a manifest are shown to the user.
-The app enforces two of them: `network` (hosts `dd.net.fetch` may reach) and
-`prompt` (without it, `dd.prompt` does nothing). The rest are informative.
+The app enforces three of them: `network` (hosts `dd.net.fetch` may reach),
+`prompt` (without it, `dd.prompt` does nothing) and `"chatLayer"` in `ui`
+(without it, `dd.ui.chatLayer` does nothing). The rest are informative.
 
 ## Layout
 
@@ -79,4 +80,6 @@ Never move or delete a published tag. Local setup once:
 
 ## License
 
-MIT, see `LICENSE`.
+MIT, see `LICENSE`, except where an extension folder has a `LICENSE` of its
+own: `extensions/risu-extra-rizz` is AGPL-3.0 (it ports code from RisuAI,
+GPL-3.0).

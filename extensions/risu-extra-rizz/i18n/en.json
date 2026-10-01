@@ -1,5 +1,7 @@
 {
   "settings_title": "Risu's extra Rizz",
+  "lbl_scripts": "Run the card's scripts",
+  "desc_scripts": "RisuAI macros ({{getvar}}, {{#if}}...), the card's display regex, its background and its music. Variables are kept per chat.",
   "lbl_chat": "Show assets in the chat",
   "desc_chat": "Where a reply writes <img=\"name\"> or {{img::name}}, the card's image shows up. A mark with no matching asset stays as written.",
   "lbl_cache": "Keep a copy of RisuRealm images",
@@ -36,5 +38,6 @@
   "opt_prompt_auto": "Automatic",
   "opt_prompt_always": "Always",
   "opt_prompt_off": "Off",
-  "prompt_label": "Images (Risu)"
+  "prompt_label": "Images (Risu)",
+  "toast_script_slow": "Risu's extra Rizz: the card regex \"{name}\" took too long and was skipped on that message."
 }

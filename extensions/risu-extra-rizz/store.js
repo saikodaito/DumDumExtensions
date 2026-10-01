@@ -6,7 +6,8 @@
 //                  name  the asset name as the card wrote it (may already end in .webp)
 //                  url   remote copy (RisuRealm CDN) or ''
 //                  file  stored file under a/, '' while it only exists remotely
-//   risuai.json  the card's extensions.risuai, raw (regex, HTML: later phases)
+//   risuai.json  the card's extensions.risuai, raw (regex, backgroundHTML,
+//                defaultVariables...: display.js and scene.js)
 //   a/<file>     the bytes
 //
 // The chat render is synchronous, so a character's library is loaded ahead
@@ -85,7 +86,7 @@ function drop(charId) {
     libs.delete(charId);
     if (lib) lib.urls.forEach(u => URL.revokeObjectURL(u));
 }
-function dropAll() { [...libs.keys()].forEach(drop); }
+function dropAll() { [...libs.keys()].forEach(drop); risus.clear(); risuStamp++; }
 
 /** Loads (or reloads) a character's library. Resolves to the lib, or null when empty. */
 function load(charId) {
@@ -221,10 +222,44 @@ async function downloadAll(charId, onStep) {
     return { done, failed, bytes };
 }
 
+// ── The card's RisuAI data (risuai.json: regex, backgroundHTML, variables) ─
+// Loaded apart from the asset library: a card can have scripts and no assets.
+const risus = new Map();       // charId → object | null (none)
+const risuLoading = new Map();
+let risuStamp = 0;             // goes up when one lands (part of the display signature)
+
+/** Synchronous: the card's extensions.risuai, or null (none, or still loading:
+ *  the chat redraws when it lands). */
+function risuGet(charId) {
+    if (!charId) return null;
+    if (risus.has(charId)) { const r = risus.get(charId); risus.delete(charId); risus.set(charId, r); return r; }
+    if (!risuLoading.has(charId)) risuLoad(charId).then(r => { if (r) dd.render.refresh(); }).catch(() => {});
+    return null;
+}
+function risuLoad(charId) {
+    if (risuLoading.has(charId)) return risuLoading.get(charId);
+    const p = (async () => {
+        let j = null;
+        try {
+            const b = await dd.files.char(charId).get('risuai.json');
+            if (b) j = JSON.parse(await b.text());
+        } catch (e) { dd.warn('risuai.json', charId, e); }
+        const r = j && typeof j === 'object' ? j : null;
+        risus.set(charId, r);
+        risuStamp++;
+        while (risus.size > 8) risus.delete(risus.keys().next().value);
+        return r;
+    })().finally(() => risuLoading.delete(charId));
+    risuLoading.set(charId, p);
+    return p;
+}
+function risuForget(charId) { if (risus.delete(charId)) risuStamp++; }
+
 dd.shared.store = {
     CDN, IMG, AUD, VID, kind, mimeOf, extOf, fileNameFor, hash,
     readIndex, writeIndex, load, get, invalidate, drop, dropAll, pick, urlOf, want, canCache, downloadAll,
-    forget: charId => { missing.delete(charId); drop(charId); },
+    risuGet, risuLoad, risuForget, get risuStamp() { return risuStamp; },
+    forget: charId => { missing.delete(charId); drop(charId); risuForget(charId); },
     /** Async get(): the loaded library, loading it if needed (null when the character has none). */
     async ensure(charId) {
         if (!charId || missing.has(charId)) return null;

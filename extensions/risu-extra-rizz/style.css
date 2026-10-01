@@ -12,6 +12,18 @@
 }
 .drx-media { display: block; max-width: min(100%, 420px); margin: .5rem 0; border-radius: var(--dd-r-md); }
 
+/* Chat: RisuAI's default button ({{button::label::trigger}}). It shows; the
+   click runs the card's trigger in a later version. */
+.x-risu-button-default {
+    display: inline-flex; align-items: center; gap: .3rem;
+    margin: .15rem; padding: .3rem .75rem;
+    border-radius: var(--dd-r-md);
+    border: 1px solid rgb(var(--dd-veil) / .15);
+    background: rgb(var(--dd-veil) / .06);
+    color: var(--dd-text);
+    font-size: .9em;
+}
+
 /* Character editor section. */
 .drx [hidden] { display: none !important; }
 .drx-section { margin-top: 1.5rem; }

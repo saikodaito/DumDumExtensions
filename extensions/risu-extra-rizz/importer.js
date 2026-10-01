@@ -40,6 +40,7 @@ async function onImported({ charId, source, card, file, done }) {
     if (risu && typeof risu === 'object') {
         try { await folder.put('risuai.json', JSON.stringify(risu), 'application/json'); }
         catch (e) { dd.warn('risuai.json', e); }
+        S.risuForget(charId);
     }
     if (!raw.length) return;
 

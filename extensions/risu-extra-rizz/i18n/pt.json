@@ -1,5 +1,7 @@
 {
   "settings_title": "Risu's extra Rizz",
+  "lbl_scripts": "Rodar os scripts do card",
+  "desc_scripts": "Macros do RisuAI ({{getvar}}, {{#if}}...), o regex de exibição do card, o fundo e a música dele. As variáveis ficam por chat.",
   "lbl_chat": "Mostrar os assets no chat",
   "desc_chat": "Quando uma resposta escreve <img=\"nome\"> ou {{img::nome}}, a imagem do card aparece. Marca sem asset correspondente fica como está escrita.",
   "lbl_cache": "Guardar cópia das imagens do RisuRealm",
@@ -36,5 +38,6 @@
   "opt_prompt_auto": "Automático",
   "opt_prompt_always": "Sempre",
   "opt_prompt_off": "Desligado",
-  "prompt_label": "Imagens (Risu)"
+  "prompt_label": "Imagens (Risu)",
+  "toast_script_slow": "Risu's extra Rizz: o regex \"{name}\" do card demorou demais e ficou de fora daquela mensagem."
 }

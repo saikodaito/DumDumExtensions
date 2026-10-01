@@ -4,13 +4,14 @@
     "en": "Risu's extra Rizz",
     "pt": "Risu's extra Rizz"
   },
-  "version": "0.2.0",
+  "version": "0.3.0",
   "api": 2,
   "minApp": "1.30.0",
   "author": "saikodaito",
+  "license": "AGPL-3.0-only",
   "summary": {
-    "en": "RisuAI card assets in DumDum: keeps the images a RisuRealm card carries and shows them in the chat where the reply writes <img=\"name\"> or {{img::name}}.",
-    "pt": "Assets dos cards do RisuAI no DumDum: guarda as imagens que um card do RisuRealm traz e mostra no chat quando a resposta escreve <img=\"nome\"> ou {{img::nome}}."
+    "en": "RisuAI cards in DumDum: the images a RisuRealm card carries, its macros (CBS), display regex, background and music.",
+    "pt": "Cards do RisuAI no DumDum: as imagens que um card do RisuRealm traz, as macros (CBS), o regex de exibição, o fundo e a música."
   },
   "platforms": [
     "desktop",
@@ -20,14 +21,21 @@
   "storage": "own",
   "scripts": [
     "store.js",
+    "vars.js",
+    "engine.js",
+    "display.js",
     "importer.js",
     "render.js",
+    "scene.js",
     "prompt.js",
     "editor.js",
     "main.js"
   ],
   "styles": [
     "style.css"
+  ],
+  "assets": [
+    "LICENSE"
   ],
   "i18n": {
     "pt": "i18n/pt.json",
@@ -41,7 +49,8 @@
     "chatRead": false,
     "ui": [
       "charEditor",
-      "settings"
+      "settings",
+      "chatLayer"
     ]
   },
   "restart": {

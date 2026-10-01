@@ -1,9 +1,14 @@
 // Risu's extra Rizz: wiring and the settings page.
-// store.js (library) → importer.js (char.imported) →
-// render.js (chat) → prompt.js (image instruction) → editor.js → this file.
+// store.js (library) → vars.js (chat variables) → engine.js (RisuAI's CBS and
+// regex, ported) → display.js (messages) → importer.js (char.imported) →
+// render.js (chat) → scene.js (background, music) → prompt.js (image
+// instruction) → editor.js → this file.
 
 const S = dd.shared.store;
-const DEFAULTS = { chat: true, cache: true, prompt: 'auto' };
+const V = dd.shared.vars;
+const D = dd.shared.display;
+const SC = dd.shared.scene;
+const DEFAULTS = { chat: true, cache: true, prompt: 'auto', scripts: true };
 dd.shared.cfg = Object.assign({}, DEFAULTS);
 const offs = [];
 let editorHandle = null;
@@ -14,26 +19,44 @@ dd.onActivate(async () => {
 
     offs.push(dd.on('char.imported', dd.shared.importer.onImported));
     offs.push(dd.on('char.deleted', e => S.forget(e.charId)));      // the app already cleared the folder
-    offs.push(dd.on('data.imported', () => { S.dropAll(); dd.render.refresh(); }));
+    offs.push(dd.on('chat.deleted', e => { V.drop(e.chatId); D.drop(e.chatId); SC.clear(e.chatId); }));
+    offs.push(dd.on('data.imported', () => { S.dropAll(); V.clear(); D.reset(); dd.render.refresh(); }));
+    offs.push(dd.on('audio.stopped', e => SC.onStopped(e)));
     offs.push(dd.render.text(dd.shared.render.render));
     offs.push(dd.prompt.inject(dd.shared.prompt.inject));
+    offs.push(D.onSig((chatId, charId) => SC.update(chatId, charId)));
     offs.push(dd.ui.slot('charEditor', {
         render(el, ctx) { editorHandle = dd.shared.editor.render(el, ctx); },
         async onSave(ctx) { if (editorHandle) await editorHandle.save(ctx.charId); },
         onClose() { if (editorHandle) editorHandle.close(); editorHandle = null; },
     }));
-    // The open chat's character, ahead of the first render.
+    // The open chat, ahead of the first render.
     const chat = dd.state.chat();
-    if (chat && chat.charId) S.load(chat.charId).then(l => { if (l) dd.render.refresh(); }).catch(() => {});
-    offs.push(dd.on('chat.opened', e => { if (e.charId) S.get(e.charId); }));
+    if (chat && chat.charId) opened(chat.id, chat.charId);
+    offs.push(dd.on('chat.opened', e => opened(e.chatId, e.charId)));
 
     dd.ui.settings(renderSettings);
 });
+
+/** A chat opened: load what its render needs, then draw it again. */
+function opened(chatId, charId) {
+    SC.onChat(chatId);
+    if (!charId) return;
+    Promise.all([S.load(charId), S.risuLoad(charId), V.load(chatId)])
+        .then(([lib, risu]) => {
+            if (lib || risu) dd.render.refresh();
+            SC.update(chatId, charId);
+        })
+        .catch(e => dd.warn('open', e));
+}
 
 dd.onDeactivate(() => {
     offs.splice(0).forEach(off => { try { off(); } catch (e) { /* already gone */ } });
     if (editorHandle) editorHandle.close();
     editorHandle = null;
+    SC.stop();
+    D.stop();
+    V.clear();
     S.dropAll();
 });
 
@@ -45,8 +68,23 @@ function setCfg(k, v) {
 async function renderSettings(el) {
     const sec = dd.ui.section({ title: { t: 'settings_title' }, icon: 'images' });
     sec.appendChild(dd.ui.toggle({
+        label: { t: 'lbl_scripts' }, desc: { t: 'desc_scripts' }, value: dd.shared.cfg.scripts,
+        onChange: v => {
+            setCfg('scripts', v);
+            D.reset();
+            const chat = dd.state.chat();
+            if (chat) { if (v) SC.update(chat.id, chat.charId); else SC.stop(); }
+            dd.render.refresh();
+        },
+    }));
+    sec.appendChild(dd.ui.toggle({
         label: { t: 'lbl_chat' }, desc: { t: 'desc_chat' }, value: dd.shared.cfg.chat,
-        onChange: v => { setCfg('chat', v); dd.render.refresh(); },
+        onChange: v => {
+            setCfg('chat', v);
+            const chat = dd.state.chat();
+            if (chat) SC.update(chat.id, chat.charId);
+            dd.render.refresh();
+        },
     }));
     sec.appendChild(dd.ui.toggle({
         label: { t: 'lbl_cache' }, desc: { t: 'desc_cache' }, value: dd.shared.cfg.cache,

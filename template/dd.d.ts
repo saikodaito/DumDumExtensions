@@ -1,5 +1,7 @@
 // Types for the `dd` object every extension script receives (API versions 1 and 2).
 // Everything marked "API 2" needs "api": 2 in the manifest (app 1.30.0 or newer).
+// "API 2.1" (Risu's extra Rizz F3a): the app version after 1.30.0; check that the
+// function exists before using it if your minApp is older.
 // Reference only: the app does not load this file.
 
 type Text = string | { t: string; vars?: Record<string, string | number> };
@@ -11,7 +13,9 @@ interface DdStore {
     keys(prefix?: string): Promise<string[]>;
 }
 
-interface DdChatMessage { role: 'user' | 'assistant' | 'system'; text: string; name: string | null; charId: string | null; }
+interface DdChatMessage { role: 'user' | 'assistant' | 'system'; text: string; name: string | null; charId: string | null;
+    time?: number;            // API 2.1: when it was sent (ms), 0 when unknown
+}
 
 interface DdModalHandle { el: HTMLElement; close(): void; }
 
@@ -44,8 +48,11 @@ interface Dd {
      *  - char.imported (API 2) DdCharImported   a character was imported and saved; the import
      *                  waits for your handler (60 s limit, call done() to let it go on sooner)
      *  - data.imported (API 2) { files, cleared? }   the user imported or wiped your own storage
-     *                  from the extension's data window */
-    on(event: 'app.ready' | 'chat.opened' | 'reply.start' | 'reply.end' | 'reply.full' | 'char.saved' | 'char.deleted' | 'lang.changed' | 'data.imported', fn: (data: any) => void): () => void;
+     *                  from the extension's data window
+     *  - chat.deleted  (API 2.1) { chatId }               your store.chat(chatId) is already cleared
+     *  - audio.stopped (API 2.1) { chatId }               the user stopped your audio.music() with
+     *                  the chat's stop button (do not start the same track again by yourself) */
+    on(event: 'app.ready' | 'chat.opened' | 'reply.start' | 'reply.end' | 'reply.full' | 'char.saved' | 'char.deleted' | 'lang.changed' | 'data.imported' | 'chat.deleted' | 'audio.stopped', fn: (data: any) => void): () => void;
     on(event: 'char.imported', fn: (data: DdCharImported) => void | Promise<void>): () => void;
 
     /** blob: URL of a file declared in manifest.assets (or icon/banner). */
@@ -56,11 +63,16 @@ interface Dd {
     t(key: string, vars?: Record<string, string | number>): string;
 
     /** Outside backups and exports. Cleared when the extension is uninstalled. */
-    store: DdStore & { char(charId: string): DdStore };   // char scope is cleared with the character
+    store: DdStore & {
+        char(charId: string): DdStore;   // cleared with the character
+        chat(chatId: string): DdStore;   // API 2.1: cleared with the chat
+    };
 
     state: {
         chat(): { id: string; charId: string | null; isGroup: boolean; messages: DdChatMessage[] } | null;
-        char(id?: string): { id: string; name: string; description: string; personality: string; scenario: string; tags: string[]; creator: string } | null;
+        char(id?: string): { id: string; name: string; description: string; personality: string; scenario: string; tags: string[]; creator: string;
+            /** API 2.1 */
+            inChatName: string; firstMessage: string; alternateGreetings: string[]; exampleDialogue: string; systemPrompt: string } | null;
         avatar(id?: string): Promise<string | null>;
         persona(): { name: string; description: string };
         ttsSpeaking(): boolean;
@@ -79,6 +91,12 @@ interface Dd {
         output(name?: string): GainNode | null;
         /** Plays an AudioBuffer or a mono Float32Array (at the context's sample rate). */
         play(data: AudioBuffer | Float32Array, o?: { output?: string; rate?: number; gain?: number; when?: number; sampleRate?: number }): AudioBufferSourceNode | null;
+        /** API 2.1. Background music of the open chat through an <audio> element (works with
+         *  remote URLs that have no CORS). Volume = o.volume (0-1) x the app's Master. One track
+         *  in the whole app: a new one replaces it; switching chats or turning your extension
+         *  off stops it. The chat shows the name (o.label) with pause and stop buttons.
+         *  url: http(s), blob: or data:audio. */
+        music(url: string, o?: { volume?: number; loop?: boolean; label?: string }): { stop(): void; readonly playing: boolean; readonly active: boolean } | null;
     };
 
     ui: {
@@ -97,6 +115,11 @@ interface Dd {
         icons(el: Element): void;   // renders <i data-lucide="..."> inside el
         /** API 2. The app's media viewer. url: http(s), blob: or data:image. */
         lightbox(items: { type?: 'image' | 'video'; url: string }[], start?: number): void;
+        /** API 2.1, needs "chatLayer" in manifest.permissions.ui. A layer of yours behind the
+         *  messages of one chat, shown while that chat is open (null removes it). The HTML is
+         *  sanitized (no scripts, styles or form controls; it does not get clicks). The CSS is
+         *  scoped to that chat's messages (.dd-msg-body): body/html/:root mean the message itself. */
+        chatLayer(chatId: string, o: { html?: string; css?: string } | null): void;
         section(o: { title: Text; icon?: string }): HTMLElement;
         toggle(o: { label: Text; desc?: Text; value?: boolean; onChange?: (v: boolean) => void }): HTMLElement;
         slider(o: { label: Text; min?: number; max?: number; step?: number; value?: number; format?: (v: number) => string; onInput?: (v: number) => void; onChange?: (v: number) => void }): HTMLElement;
@@ -158,6 +181,9 @@ interface Dd {
         text(fn: (text: string, ctx: DdRenderCtx) => string): () => void;
         /** Redraws the open chat (after loading what your render function uses). */
         refresh(): void;
+        /** API 2.1. Redraws one message of the open chat (an async result of yours arrived:
+         *  your render function runs again for it). Batched; a streaming message is skipped. */
+        redraw(chatId: string, msgIndex: number): void;
     };
     /** API 2, only with "storage": "own" in the manifest (null otherwise). A database of your own,
      *  outside the app backup and the character export. The user exports it from the data button
