@@ -35,6 +35,7 @@ export function manifestErrors(m, folder) {
     if (!m.version || typeof m.version !== 'string' || !/^\d+\.\d+\.\d+/.test(m.version)) e.push('version must be semver (x.y.z)');
     if (!Number.isInteger(m.api)) e.push('api must be an integer');
     if (!Array.isArray(m.scripts) || !m.scripts.length) e.push('scripts must be a non-empty list');
+    if (m.storage != null && !(m.storage === 'own' && m.api >= 2)) e.push('storage: only "own", and it needs "api": 2');
     if (m.platforms && !(Array.isArray(m.platforms) && m.platforms.every(p => p === 'desktop' || p === 'mobile'))) e.push('platforms: only "desktop" and "mobile"');
     for (const p of filesOf(m)) if (!pathOk(p)) e.push('bad path: ' + p);
     return e;

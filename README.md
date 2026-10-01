@@ -39,6 +39,7 @@ extensions/<id>/
   test/                 optional, never downloaded by the app
 template/hello/         a small extension that uses most of the API
 template/pinned-note/   the prompt hooks (dd.prompt.inject / transform)
+template/asset-probe/   API 2: char.imported, dd.render.text, own storage (dd.files)
 tools/                  build-index, pack, check-publish
 ```
 

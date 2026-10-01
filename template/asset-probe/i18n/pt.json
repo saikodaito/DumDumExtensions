@@ -1,0 +1,7 @@
+{
+  "toast_kept": "Sonda de Assets guardou {n} de {total} imagens deste card.",
+  "sec_probe": "Sonda de Assets",
+  "usage": "{f} arquivos de {n} personagens, {mb} MB.",
+  "hint_how": "Importe um card que traz imagens (um card do RisuRealm com assets, por exemplo). Quando uma mensagem escreve <img=\"nome\"> ou {{img::nome}}, a imagem aparece no chat.",
+  "hint_backup": "Estes arquivos ficam fora do backup do app: use o botão de dados ao lado da extensão para exportar."
+}

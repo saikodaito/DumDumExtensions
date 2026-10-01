@@ -1,0 +1,52 @@
+/* Risu's extra Rizz. App tokens only (--dd-*). */
+
+/* Chat: the card's images inside a reply. The app opens its viewer on click. */
+.drx-img {
+    display: block;
+    max-width: min(100%, 420px);
+    max-height: 60vh;
+    width: auto;
+    margin: .5rem 0;
+    border-radius: var(--dd-r-md);
+    cursor: zoom-in;
+}
+.drx-media { display: block; max-width: min(100%, 420px); margin: .5rem 0; border-radius: var(--dd-r-md); }
+
+/* Character editor section. */
+.drx [hidden] { display: none !important; }
+.drx-section { margin-top: 1.5rem; }
+.drx-summary { display: flex; align-items: center; gap: .5rem; margin-bottom: .75rem; cursor: pointer; user-select: none; list-style: none; }
+.drx-summary::-webkit-details-marker, .drx-group-sum::-webkit-details-marker { display: none; }
+.drx-ico { width: 14px; height: 14px; flex-shrink: 0; }
+.drx-summary .drx-ico:first-child { color: var(--dd-text-3); transition: transform .15s; }
+.drx-section[open] > .drx-summary .drx-ico:first-child { transform: rotate(90deg); }
+.drx-summary .drx-ico:nth-child(2) { color: var(--primary); }
+.drx-title { font-size: calc(12px * var(--dd-fs-ui)); font-weight: 700; color: var(--dd-text-3); text-transform: uppercase; letter-spacing: .05em; }
+.drx-note { font-size: calc(10px * var(--dd-fs-ui)); color: var(--dd-text-3); }
+.drx-hint { font-size: calc(10px * var(--dd-fs-ui)); color: var(--dd-text-3); margin-bottom: .75rem; }
+.drx-status { font-size: calc(10px * var(--dd-fs-ui)); color: var(--dd-text-2); min-height: 1em; margin: .25rem 0 .5rem; }
+.drx-bar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.drx-search {
+    flex: 1; min-width: 140px;
+    background: var(--dd-sunk); border: 1px solid rgb(var(--dd-veil) / .1); border-radius: var(--dd-r-md);
+    padding: .3rem .5rem; font-size: calc(12px * var(--dd-fs-ui)); color: var(--dd-text);
+}
+.drx-list { display: flex; flex-direction: column; gap: .35rem; max-height: 420px; overflow-y: auto; }
+.drx-group { background: rgb(var(--dd-veil) / .04); border: 1px solid rgb(var(--dd-veil) / .08); border-radius: var(--dd-r-md); padding: .35rem .5rem; }
+.drx-group-sum { display: flex; align-items: center; gap: .5rem; cursor: pointer; list-style: none; }
+.drx-group-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: calc(12px * var(--dd-fs-ui)); color: var(--dd-text-2); }
+.drx-thumb {
+    width: 40px; height: 40px; flex-shrink: 0; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: var(--dd-r-sm); background: var(--dd-sunk); cursor: zoom-in; color: var(--dd-text-3);
+}
+.drx-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.drx-row { display: flex; align-items: center; gap: .5rem; margin-top: .35rem; }
+.drx-name {
+    flex: 1; min-width: 0;
+    background: var(--dd-sunk); border: 1px solid rgb(var(--dd-veil) / .1); border-radius: var(--dd-r-sm);
+    padding: .2rem .4rem; font-size: calc(11px * var(--dd-fs-ui)); color: var(--dd-text);
+}
+.drx-tag { flex-shrink: 0; font-size: calc(10px * var(--dd-fs-ui)); color: var(--dd-text-3); }
+.drx-gone .drx-name { text-decoration: line-through; opacity: .5; }
+.drx-gone .drx-tag { opacity: .5; }

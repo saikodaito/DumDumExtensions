@@ -1,0 +1,7 @@
+{
+  "toast_kept": "Asset Probe kept {n} of {total} images from this card.",
+  "sec_probe": "Asset Probe",
+  "usage": "{f} files from {n} characters, {mb} MB.",
+  "hint_how": "Import a card that carries images (a RisuRealm card with assets, for example). When a message writes <img=\"name\"> or {{img::name}}, the image shows up in the chat.",
+  "hint_backup": "These files are not in the app backup: use the data button next to the extension to export them."
+}

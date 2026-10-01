@@ -1,4 +1,5 @@
-// Types for the `dd` object every extension script receives (API version 1).
+// Types for the `dd` object every extension script receives (API versions 1 and 2).
+// Everything marked "API 2" needs "api": 2 in the manifest (app 1.30.0 or newer).
 // Reference only: the app does not load this file.
 
 type Text = string | { t: string; vars?: Record<string, string | number> };
@@ -20,7 +21,7 @@ interface DdSlotCtx { charId: string | null; isNew: boolean; markDirty(): void; 
 interface Dd {
     readonly id: string;
     readonly version: string;
-    readonly apiVersion: 1;
+    readonly apiVersion: 1 | 2;
     readonly appVersion: string;
     readonly platform: 'desktop' | 'mobile';
     readonly lang: 'pt' | 'en';
@@ -39,8 +40,13 @@ interface Dd {
      *  - reply.full    { chatId, charId, kind, text, ttsWillRead }   a reply that arrived whole (streaming off)
      *  - char.saved    { charId }                           the character editor saved
      *  - char.deleted  { charId }                           your per-character storage is already cleared
-     *  - lang.changed  { lang } */
-    on(event: 'app.ready' | 'chat.opened' | 'reply.start' | 'reply.end' | 'reply.full' | 'char.saved' | 'char.deleted' | 'lang.changed', fn: (data: any) => void): () => void;
+     *  - lang.changed  { lang }
+     *  - char.imported (API 2) DdCharImported   a character was imported and saved; the import
+     *                  waits for your handler (60 s limit, call done() to let it go on sooner)
+     *  - data.imported (API 2) { files, cleared? }   the user imported or wiped your own storage
+     *                  from the extension's data window */
+    on(event: 'app.ready' | 'chat.opened' | 'reply.start' | 'reply.end' | 'reply.full' | 'char.saved' | 'char.deleted' | 'lang.changed' | 'data.imported', fn: (data: any) => void): () => void;
+    on(event: 'char.imported', fn: (data: DdCharImported) => void | Promise<void>): () => void;
 
     /** blob: URL of a file declared in manifest.assets (or icon/banner). */
     asset(path: string): Promise<string>;
@@ -89,6 +95,8 @@ interface Dd {
         toast(text: string, type?: 'info' | 'success' | 'warning' | 'error'): void;
         confirm(text: string, o?: { ok?: string; cancel?: string }): Promise<boolean>;
         icons(el: Element): void;   // renders <i data-lucide="..."> inside el
+        /** API 2. The app's media viewer. url: http(s), blob: or data:image. */
+        lightbox(items: { type?: 'image' | 'video'; url: string }[], start?: number): void;
         section(o: { title: Text; icon?: string }): HTMLElement;
         toggle(o: { label: Text; desc?: Text; value?: boolean; onChange?: (v: boolean) => void }): HTMLElement;
         slider(o: { label: Text; min?: number; max?: number; step?: number; value?: number; format?: (v: number) => string; onInput?: (v: number) => void; onChange?: (v: number) => void }): HTMLElement;
@@ -139,6 +147,88 @@ interface DdInjection {
     role?: 'system' | 'user' | 'assistant';
     /** Name in the prompt inspector. Default: the extension's name. */
     label?: string;
+}
+
+interface Dd {
+    /** API 2. Changes the text of chat messages before the markdown, at the same point as the
+     *  preset's screen regex (in the bubble and while streaming, at most every 250 ms).
+     *  SYNCHRONOUS: over 50 ms in one call it is turned off until the app reopens.
+     *  The HTML you return is sanitized like the rest of the bubble; blob: URLs are allowed in src. */
+    render: {
+        text(fn: (text: string, ctx: DdRenderCtx) => string): () => void;
+        /** Redraws the open chat (after loading what your render function uses). */
+        refresh(): void;
+    };
+    /** API 2, only with "storage": "own" in the manifest (null otherwise). A database of your own,
+     *  outside the app backup and the character export. The user exports it from the data button
+     *  next to your extension (.dumextdata). The char folder is deleted with the character; on
+     *  uninstall the user chooses whether to keep it. */
+    files: {
+        char(charId: string): DdFolder;
+        global(): DdFolder;
+        usage(): Promise<{ files: number; bytes: number; chars: number }>;
+    } | null;
+    /** API 2. Expressions (sprites) of a character. */
+    expr: {
+        /** The user's Expressions setting is on. */
+        enabled(): boolean;
+        /** Asks the user (unless ask:false) and builds an expressions pack for the character from
+         *  files named after the emotion ('angry.webp', 'joy.png'). Does nothing and returns false
+         *  when Expressions are off. Replaces the current pack. */
+        offer(charId: string, files: { name: string; blob: Blob }[], o?: { ask?: boolean }): Promise<boolean>;
+    };
+    /** API 2. The app's asset name matching (the same the Char Browser preview uses): no case,
+     *  no extension; exact, then variants (name_1, name_2), then the closest by up to 4 edits. */
+    assets: {
+        norm(name: string): string;
+        /** 'Hikari_angry_2' → 'hikari_angry' */
+        group(name: string): string;
+        /** maxEdits: 4 by default (Risu's rule); 0 = exact and variants only. */
+        candidates(wanted: string, names: string[], maxEdits?: number): number[];
+        /** One index or -1. Several candidates → a stable pick for the same seed. */
+        match(wanted: string, names: string[], seed?: string, maxEdits?: number): number;
+        /** Calls fn for every <img="name"> and {{type::name}} in the text; return the replacement
+         *  or null to keep it. type: img, image, asset, emotion, raw, path, video, video-img,
+         *  audio, bgm, bg, source (<img="..."> comes as 'img'). */
+        /** native = the {{type::name}} syntax. <img="name"> is a card convention: match it with
+         *  maxEdits 0, or one character's line may get another character's image. */
+        replace(text: string, fn: (type: string, name: string, mark: string, native: boolean) => string | null): string;
+    };
+}
+
+interface DdRenderCtx {
+    chatId: string;
+    charId: string | null;    // in a group chat, the character who wrote the message
+    msgIndex: number;
+    role: 'user' | 'assistant';
+    streaming: boolean;
+}
+
+interface DdFolder {
+    /** name: up to 300 characters, '/' allowed. Strings and buffers become a Blob of the given type. */
+    put(name: string, data: Blob | ArrayBuffer | ArrayBufferView | string, type?: string): Promise<void>;
+    get(name: string): Promise<Blob | null>;
+    has(name: string): Promise<boolean>;
+    list(): Promise<{ name: string; size: number; type: string; t: number }[]>;
+    /** list() with the Blobs, in one pass. prefix filters by the start of the name. */
+    entries(prefix?: string): Promise<{ name: string; size: number; type: string; t: number; blob: Blob }[]>;
+    /** Many files at once (one transaction per 200): much faster than put() in a loop. */
+    putMany(items: { name: string; data: Blob | ArrayBuffer | ArrayBufferView | string; type?: string }[]): Promise<void>;
+    del(name: string): Promise<void>;
+    clear(): Promise<void>;
+}
+
+interface DdCharImported {
+    charId: string;
+    /** 'file', 'link' or the Char Browser source ('risurealm', 'chub', 'janny'...). */
+    source: string;
+    /** A copy of the card as it came, before the import changed it (assets, extensions). */
+    card: any;
+    /** An embedded file of the card ('embeded://path' or 'path'): an entry of the .charx or a
+     *  chunk of the PNG. null when missing. Works while your handler runs. */
+    file(path: string): Promise<Blob | null>;
+    /** Lets the import go on now; your handler may keep working in the background. */
+    done(): void;
 }
 
 declare const dd: Dd;

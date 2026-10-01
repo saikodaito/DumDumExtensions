@@ -1,0 +1,50 @@
+{
+  "id": "risu-extra-rizz",
+  "name": {
+    "en": "Risu's extra Rizz",
+    "pt": "Risu's extra Rizz"
+  },
+  "version": "0.1.0",
+  "api": 2,
+  "minApp": "1.30.0",
+  "author": "saikodaito",
+  "summary": {
+    "en": "RisuAI card assets in DumDum: keeps the images a RisuRealm card carries and shows them in the chat where the reply writes <img=\"name\"> or {{img::name}}.",
+    "pt": "Assets dos cards do RisuAI no DumDum: guarda as imagens que um card do RisuRealm traz e mostra no chat quando a resposta escreve <img=\"nome\"> ou {{img::nome}}."
+  },
+  "platforms": [
+    "desktop",
+    "mobile"
+  ],
+  "defaultLang": "en",
+  "storage": "own",
+  "scripts": [
+    "store.js",
+    "importer.js",
+    "render.js",
+    "editor.js",
+    "main.js"
+  ],
+  "styles": [
+    "style.css"
+  ],
+  "i18n": {
+    "pt": "i18n/pt.json",
+    "en": "i18n/en.json"
+  },
+  "permissions": {
+    "network": [
+      "sv.risuai.xyz"
+    ],
+    "prompt": false,
+    "chatRead": false,
+    "ui": [
+      "charEditor",
+      "settings"
+    ]
+  },
+  "restart": {
+    "enable": false,
+    "disable": false
+  }
+}

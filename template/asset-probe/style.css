@@ -1,0 +1,7 @@
+/* Images this extension puts in the chat bubbles. */
+.dd-ap-img {
+    display: block;
+    max-width: min(100%, 360px);
+    margin: 6px 0;
+    border-radius: var(--dd-r-sm);
+}
