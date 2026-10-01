@@ -24,7 +24,28 @@ function namesOf(lib) {
     return out;
 }
 
+/** The start triggers' system prompt (triggers.js): RisuAI puts 'start' at
+ *  the beginning of the prompt, 'historyend' after the history and
+ *  'promptend' at the very end; the closest places here. */
+function triggerSys(ctx) {
+    const sys = dd.shared.triggers ? dd.shared.triggers.takeSys(ctx.chatId) : null;
+    if (!sys) return [];
+    const out = [];
+    const add = (text, position) => { if (text && String(text).trim()) out.push({ text: String(text).trim(), position, label: dd.t('prompt_label_trigger') }); };
+    add(sys.start, 'system:end');
+    add(sys.historyend, 'depth:0');
+    add(sys.promptend, 'depth:0');
+    return out;
+}
+
 async function inject(ctx) {
+    const extra = triggerSys(ctx);
+    const img = await imageInstruction(ctx);
+    const all = (img ? [img] : []).concat(extra);
+    return all.length ? all : null;
+}
+
+async function imageInstruction(ctx) {
     const mode = dd.shared.cfg.prompt || 'auto';
     if (mode === 'off' || !ctx.charId) return null;
     const lib = await S.ensure(ctx.charId);

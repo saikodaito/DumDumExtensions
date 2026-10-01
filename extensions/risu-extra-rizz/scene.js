@@ -34,7 +34,7 @@ function clear(chatId) {
 function run(chatId, charId) {
     if (!chatId || dd.state.activeChatId() !== chatId) return;
     const risu = charId ? S.risuGet(charId) : null;
-    const html = risu && dd.shared.cfg.scripts ? String(risu.backgroundHTML || '').trim() : '';
+    const html = risu && dd.shared.cfg.scripts ? D.bgHtml(risu).trim() : '';
     if (!html) { clear(chatId); return; }
     D.background(chatId, charId, risu, out => {
         if (out == null || dd.state.activeChatId() !== chatId) return;

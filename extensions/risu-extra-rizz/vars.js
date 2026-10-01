@@ -58,8 +58,27 @@ async function setMany(chatId, changes) {
 
 function drop(chatId) { if (cache.delete(chatId)) version++; }
 
+// Messages whose {{setvar}}s already ran (RisuAI runs them once and removes
+// them from the message; here the message is not changed, so this remembers):
+// { index: { h: hash, n: length } of the text that ran }. An edited message
+// runs again; one that only grew (continue) runs just the new part.
+const DONE = 'varsDone';
+const doneMem = new Map();       // apps without dd.store.chat
+async function done(chatId) {
+    const sc = scope(chatId);
+    let d = null;
+    try { d = sc ? await sc.get(DONE) : doneMem.get(chatId); } catch (e) { dd.warn('vars', e); }
+    return d && typeof d === 'object' ? Object.assign({}, d) : {};
+}
+async function markDone(chatId, marks) {
+    if (!chatId || !marks || !Object.keys(marks).length) return;
+    const d = Object.assign(await done(chatId), marks);
+    const sc = scope(chatId);
+    if (sc) await sc.set(DONE, d); else doneMem.set(chatId, d);
+}
+
 dd.shared.vars = {
-    load, get, setMany, drop,
+    load, get, setMany, drop, done, markDone,
     get version() { return version; },
     clear() { cache.clear(); version++; },
 };

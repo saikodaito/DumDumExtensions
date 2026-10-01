@@ -239,12 +239,39 @@ function risuGet(charId) {
 function risuLoad(charId) {
     if (risuLoading.has(charId)) return risuLoading.get(charId);
     const p = (async () => {
-        let j = null;
+        let j = null, m = null;
+        const folder = dd.files.char(charId);
         try {
-            const b = await dd.files.char(charId).get('risuai.json');
+            const b = await folder.get('risuai.json');
             if (b) j = JSON.parse(await b.text());
         } catch (e) { dd.warn('risuai.json', charId, e); }
-        const r = j && typeof j === 'object' ? j : null;
+        try {
+            const b = await folder.get('module.json');
+            if (b) m = JSON.parse(await b.text());
+        } catch (e) { dd.warn('module.json', charId, e); }
+        let r = j && typeof j === 'object' ? j : null;
+        // The .charx module (risum.js) and the modules added by hand
+        // (modules.js): their regex and triggers run after the card's own, as
+        // RisuAI concatenates enabled modules; their background embedding goes
+        // after the card's backgroundHTML; their namespaces and images answer
+        // {{module_assetlist}} (engine ctx.modules).
+        const extra = [];
+        if (dd.shared.modules) {
+            for (const e of await dd.shared.modules.list(charId)) {
+                const d = await dd.shared.modules.read(charId, e.key);
+                if (d) extra.push(d);
+            }
+        }
+        const all = (m && typeof m === 'object' ? [m] : []).concat(extra);
+        if (all.length) {
+            r = Object.assign({}, r || {});
+            r.customScripts = [].concat(r.customScripts || [], ...all.map(x => x.regex || []));
+            r.triggerscript = [].concat(r.triggerscript || [], ...all.map(x => x.trigger || []));
+            r.moduleName = all.map(x => x.name || '').filter(Boolean).join(', ');
+            r.moduleBackground = all.map(x => x.backgroundEmbedding || '').filter(Boolean).join('\n');
+            r.lowLevelAccess = !!(r.lowLevelAccess || all.some(x => x.lowLevelAccess));
+            r.modules = all.filter(x => x.namespace).map(x => ({ namespace: x.namespace, assets: Array.isArray(x.assetNames) ? x.assetNames : [] }));
+        }
         risus.set(charId, r);
         risuStamp++;
         while (risus.size > 8) risus.delete(risus.keys().next().value);
@@ -259,6 +286,8 @@ dd.shared.store = {
     CDN, IMG, AUD, VID, kind, mimeOf, extOf, fileNameFor, hash,
     readIndex, writeIndex, load, get, invalidate, drop, dropAll, pick, urlOf, want, canCache, downloadAll,
     risuGet, risuLoad, risuForget, get risuStamp() { return risuStamp; },
+    /** Async risuGet: the loaded one, or loads it (null when the card has none). */
+    risuEnsure: charId => !charId ? Promise.resolve(null) : (risus.has(charId) ? Promise.resolve(risus.get(charId)) : risuLoad(charId)),
     forget: charId => { missing.delete(charId); drop(charId); risuForget(charId); },
     /** Async get(): the loaded library, loading it if needed (null when the character has none). */
     async ensure(charId) {

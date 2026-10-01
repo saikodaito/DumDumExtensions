@@ -11,6 +11,10 @@
 //   src/ts/parser/chatVar.svelte.ts getChatVar/setChatVar (adapted to a context)
 //   src/ts/process/infunctions.ts   calcString ({{? }} and {{calc}})
 //   src/ts/process/scripts.ts       processScriptFull, the regex part
+//   src/ts/process/triggers.ts      runTrigger (every v1 and v2 effect)
+//   src/ts/process/scriptings.ts    runScripted and the Lua API, the Lua
+//                                   wrapper (listenEdit, async, json),
+//                                   runLuaEditTrigger, runLuaButtonTrigger
 //   src/ts/util.ts                  sfc32, pickHashRand, parseKeyValue
 //
 // Changes made for DumDum (01/10/2026):
@@ -24,6 +28,11 @@
 //   - Debug console.log calls removed from #func/call.
 //   - processScriptFull: no Lua, triggers, plugins or dynamic assets (later
 //     phases); @@emo is ignored and @@inject does not write to the chat.
+//   - runTrigger and the Lua side: RisuAI's stores become the context
+//     (frag-triggers.js); alerts and the model (dd.llm) go through the page;
+//     Lua runs on wasmoon, like RisuAI (lua-vendor.js); image generation,
+//     similarity search, Lua's request() and writes to the character
+//     (name, description, lorebook) are not available.
 //
 // It runs inside a worker (rizzEngine.toString() is its source) or, without
 // workers, on the page: so the function must not use anything from outside.

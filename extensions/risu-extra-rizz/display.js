@@ -27,9 +27,17 @@ const UNESC = ['{', '}', '(', ')', '&lt;', '&gt;', ':', ';'];
 const unescape = s => s.replace(/[-]/g, c => UNESC[c.charCodeAt(0) - 0xE9B8]);
 
 // ── The card's classes, renamed (RisuAI: x-risu-*) ──────────────────────
+// RisuAI puts ".chattext " before every selector, so html, body and :root in a
+// card's CSS match nothing there (the message has no such elements). The app
+// would turn them into the bubble itself, and a card that styles them
+// (Jiyu: body { display: flex }) squeezed the whole message into a row.
+// They become :not(*), which matches nothing here too.
 function prefixSelector(sel) {
-    return sel.replace(/\[[^\]]*\]|"[^"]*"|'[^']*'|\.(-?[A-Za-z_][\w-]*)/g,
-        (m, cls) => (cls === undefined || cls.startsWith('x-risu-')) ? m : '.x-risu-' + cls);
+    return sel.replace(/\[[^\]]*\]|"[^"]*"|'[^']*'|\.(-?[A-Za-z_][\w-]*)|(^|[\s>+~,(])(html|body|:root)(?![\w-])/gi,
+        (m, cls, pre, root) => {
+            if (root !== undefined) return pre + ':not(*)';
+            return (cls === undefined || cls.startsWith('x-risu-')) ? m : '.x-risu-' + cls;
+        });
 }
 /** Index of the first of `stops` at i or after, skipping strings and comments. */
 function scanTo(s, i, stops) {
@@ -68,11 +76,18 @@ function prefixCss(css) {
     }
     return out;
 }
+// vw in a card's CSS: on RisuAI the message is as wide as the window, so
+// cards size panels with calc(100vw - 32px). Here it measures the message
+// (the app keeps --dd-chat-vw = 1% of a wide message's width).
+const VW = /(-?(?:\d+\.?\d*|\.\d+))[dsl]?vw\b/gi;
+const chatVw = css => css.replace(VW, (m, n) => 'calc(' + n + ' * var(--dd-chat-vw, 1vw))');
+
 /** HTML from a card: class names renamed, <style> too, risu-* attributes kept
  *  as data-risu-* (the app's sanitizer drops unknown attributes). */
 function scopeHtml(html) {
     return html
-        .replace(/(<style[^>]*>)([\s\S]*?)(<\/style>)/gi, (m, a, css, z) => a + prefixCss(css) + z)
+        .replace(/(<style[^>]*>)([\s\S]*?)(<\/style>)/gi, (m, a, css, z) => a + chatVw(prefixCss(css)) + z)
+        .replace(/(\sstyle\s*=\s*)("[^"]*"|'[^']*')/gi, (m, a, v) => a + chatVw(v))
         .replace(/(\sclass\s*=\s*)(?:"([^"]*)"|'([^']*)')/gi, (m, a, dq, sq) => {
             const v = (dq != null ? dq : sq).split(/\s+/).filter(Boolean)
                 .map(c => (c.startsWith('x-risu-') || c.startsWith('hljs')) ? c : 'x-risu-' + c).join(' ');
@@ -103,6 +118,10 @@ const finish = s => scopeHtml(noIndentCode(unescape(s)));
 // ── Context: what RisuAI's database would say about this chat ────────────
 const hasDisplayScripts = risu => Array.isArray(risu.customScripts)
     && risu.customScripts.some(x => x && x.type === 'editdisplay' && x.in);
+// Only a Lua that registers listenEdit('editDisplay') changes the screen; the
+// others would pay one Lua call per message at every redraw for nothing.
+const hasLua = risu => !!(dd.shared.triggers && dd.shared.triggers.luaListens(risu, 'editdisplay'));
+const luaPending = new Set();    // display jobs waiting for the Lua pass
 
 let ctxMemo = null;           // the last context built (reused within 60 ms)
 const sigListeners = new Set();
@@ -125,7 +144,7 @@ function ctxNow(chatId, charId, risu) {
     const off = msgs.length && msgs[0].role === 'assistant' ? 1 : 0;
     const lib = S.get(charId);
     const x = {
-        key: chatId, sig, offset: off, scripts: hasDisplayScripts(risu),
+        key: chatId, sig, offset: off, scripts: hasDisplayScripts(risu), lua: hasLua(risu),
         ctx: {
             char: {
                 name: c.inChatName || c.name || '', desc: c.description || '', personality: c.personality || '',
@@ -135,6 +154,9 @@ function ctxNow(chatId, charId, risu) {
                 additionalAssets: lib ? lib.items.map(it => [it.name, '', it.ext]) : [],
                 defaultVariables: String(risu.defaultVariables || ''),
                 customscript: Array.isArray(risu.customScripts) ? risu.customScripts.filter(s => s && typeof s.in === 'string') : [],
+                // triggers.js. Low level access (model, images, Lua) comes later: off.
+                triggerscript: Array.isArray(risu.triggerscript) ? risu.triggerscript : [],
+                lowLevelAccess: false,
                 prebuiltAssetCommand: !!risu.prebuiltAssetCommand,
                 prebuiltAssetExclude: Array.isArray(risu.prebuiltAssetExclude) ? risu.prebuiltAssetExclude : [],
             },
@@ -145,6 +167,7 @@ function ctxNow(chatId, charId, risu) {
             user: { name: p.name || 'User', persona: p.description || '' },
             vars, globals: {},
             db: { language: dd.lang },
+            modules: Array.isArray(risu.modules) ? risu.modules : [],
             meta: { w: typeof innerWidth === 'number' ? innerWidth : 0, h: typeof innerHeight === 'number' ? innerHeight : 0 },
         },
     };
@@ -290,8 +313,12 @@ function request(t, X, text, o, k, cb) {
     pump();
 }
 
+/** RisuAI's BackgroundDom: the card's backgroundHTML, then the module's background embedding. */
+const bgHtml = risu => String(risu.backgroundHTML || '') + (risu.moduleBackground ? '\n' + risu.moduleBackground : '');
+
 // ── Messages ──────────────────────────────────────────────────────────────
 const memo = new Map();       // chatId|index|role → { text, sig, out }
+const seen = new Map();       // chatId|index|role → the last render context and text (rerun)
 function memoSet(k, v) {
     memo.delete(k);
     memo.set(k, v);
@@ -308,11 +335,16 @@ function text(src, ctx) {
     const i = ctx.msgIndex | 0, first = i < X.offset;
     const o = { chatID: first ? -1 : i - X.offset, role: ctx.role === 'user' ? 'user' : 'char', firstmsg: first, seed: ctx.chatId + ':' + i };
     const mk = ctx.chatId + '|' + i + '|' + o.role + (ctx.streaming ? '|s' : '');
+    if (!ctx.streaming) {
+        seen.delete(mk);
+        seen.set(mk, { src, ctx: { chatId: ctx.chatId, charId: ctx.charId, msgIndex: i, role: ctx.role, streaming: false } });
+        while (seen.size > MEMO_MAX) seen.delete(seen.keys().next().value);
+    }
     const m = memo.get(mk);
     if (m && m.text === src && m.sig === X.sig) return m.out;
 
-    // No regex: CBS only, here and now.
-    if (!X.scripts) {
+    // No regex (and no Lua): CBS only, here and now.
+    if (!X.scripts && !X.lua) {
         let out = src;
         try { out = finish(onPage(X).display(X.key, src, o)); } catch (e) { dd.warn('engine', e); }
         memoSet(mk, { text: src, sig: X.sig, out });
@@ -321,13 +353,23 @@ function text(src, ctx) {
     // While it streams, one job at a time for the message (the next draw, 250 ms
     // later, asks again with the newer text).
     const k = ctx.streaming ? mk : mk + '|' + X.sig + '|' + src.length + '|' + src.slice(-64);
-    request('display', X, src, o, k, out => {
+    const done = out => {
         if (out == null) { memoSet(mk, { text: src, sig: X.sig, out: src }); return; }
         const prev = memo.get(mk);
         const fin = finish(out);
         memoSet(mk, { text: src, sig: X.sig, out: fin });
         if (!ctx.streaming && (!prev || prev.out !== fin || prev.text !== src) && dd.render.redraw) dd.render.redraw(ctx.chatId, i);
-    });
+    };
+    if (X.lua && dd.shared.triggers) {
+        // RisuAI: the card's Lua listenEdit('editDisplay') runs first (on the
+        // page, wasmoon), then the CBS and the regex in the worker.
+        if (!luaPending.has(k)) {
+            luaPending.add(k);
+            dd.shared.triggers.luaEdit(ctx.chatId, ctx.charId, 'editdisplay', src, { index: o.chatID })
+                .then(pre => request('display', X, typeof pre === 'string' ? pre : src, o, k, done))
+                .finally(() => luaPending.delete(k));
+        }
+    } else request('display', X, src, o, k, done);
     // Meanwhile: the last result of this message (same text) or, while it
     // streams, the last one drawn (a little shorter, but already with the
     // regex) instead of the raw text flashing at every draw. A reply that just
@@ -343,7 +385,7 @@ function text(src, ctx) {
 function background(chatId, charId, risu, cb) {
     const X = ctxNow(chatId, charId, risu);
     if (!X) return;
-    const html = String(risu.backgroundHTML || '');
+    const html = bgHtml(risu);
     const o = { seed: chatId + ':bg' };
     if (!X.scripts) {
         let out = null;
@@ -354,8 +396,31 @@ function background(chatId, charId, risu, cb) {
     request('background', X, html, o, chatId + '|bg|' + X.sig, out => cb(out == null ? null : unescape(out), X));
 }
 
+/** The variables changed (a card button, a trigger): the messages this chat
+ *  drew go through the card's scripts again and only the ones whose result
+ *  changed are redrawn. A whole-chat redraw per button was most of a
+ *  click's cost (every bubble rebuilt with stale text, then again). */
+function rerun(chatId) {
+    ctxMemo = null;
+    const list = [];
+    for (const [k, v] of seen) if (k.startsWith(chatId + '|')) list.push([k, v]);
+    if (!list.length || !dd.render.redraw || dd.state.activeChatId() !== chatId) { dd.render.refresh(); return; }
+    const chat = dd.state.chat();
+    const n = chat && chat.id === chatId ? (chat.messages || []).length : 0;
+    for (const [k, v] of list) {
+        if (v.ctx.msgIndex >= n) { seen.delete(k); continue; }
+        const before = memo.get(k);
+        let out;
+        try { out = text(v.src, v.ctx); } catch (e) { dd.warn('display', e); continue; }
+        // Scripts in the worker redraw on their own when the result lands
+        // (done); CBS only answers here and now.
+        if (before && out !== before.out && memo.get(k) && memo.get(k).out === out) dd.render.redraw(chatId, v.ctx.msgIndex);
+    }
+}
+
 function drop(chatId) {
     for (const k of [...memo.keys()]) if (k.startsWith(chatId + '|')) memo.delete(k);
+    for (const k of [...seen.keys()]) if (k.startsWith(chatId + '|')) seen.delete(k);
     pageSent.delete(chatId);
     if (pageE) pageE.dropCtx(chatId);
     if (W) { W.sent.delete(chatId); try { W.w.postMessage({ t: 'drop', key: chatId }); } catch (e) { /* gone */ } }
@@ -365,14 +430,26 @@ function stop() {
     queue.splice(0);
     inflight.clear();
     memo.clear();
+    seen.clear();
     ctxMemo = null;
     pageSent.clear();
     pageE = null;
     if (W) { clearTimeout(W.tm); try { W.w.terminate(); } catch (e) { /* gone */ } W = null; }
 }
 
+let promSeq = 0;
+/** A job as a promise (the prompt side): the text, or null when the engine
+ *  gave up on it. t: 'display' | 'background' | 'script'. */
+function run(t, X, text, o) {
+    return new Promise(res => request(t, X, text, o, 'p|' + (++promSeq), out => res(out)));
+}
+
 dd.shared.display = {
-    text, background, drop, stop, scopeHtml, prefixCss, unescape, ctxNow,
+    text, background, bgHtml, drop, stop, rerun, scopeHtml, prefixCss, unescape, ctxNow, run,
+    /** The engine on the page, with X's context (CBS only: linear, safe here). */
+    page: X => onPage(X),
+    /** The next ctxNow builds a new context (variables just changed). */
+    freshCtx() { ctxMemo = null; },
     onSig(fn) { sigListeners.add(fn); return () => sigListeners.delete(fn); },
     /** Forget results (variables or the card changed). */
     reset() { memo.clear(); ctxMemo = null; },

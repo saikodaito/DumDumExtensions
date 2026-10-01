@@ -21,9 +21,12 @@ Extensions run inside the app with the same access the app has. There is no
 sandbox. What keeps users safe is that every extension in this repository is
 read before it is published, and that the hashes make sure the app runs 
 exactly that code. The permissions in a manifest are shown to the user.
-The app enforces three of them: `network` (hosts `dd.net.fetch` may reach),
-`prompt` (without it, `dd.prompt` does nothing) and `"chatLayer"` in `ui`
-(without it, `dd.ui.chatLayer` does nothing). The rest are informative.
+The app enforces six of them: `network` (hosts `dd.net.fetch` may reach),
+`prompt` (without it, `dd.prompt` does nothing), `input` (without it,
+`dd.input.transform` does nothing), `chatWrite` (without it, `dd.chat`
+does nothing), `llm` (without it, `dd.llm.ask` throws) and `"chatLayer"`
+in `ui` (without it, `dd.ui.chatLayer` does nothing). The rest are
+informative.
 
 ## Layout
 

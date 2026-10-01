@@ -8,6 +8,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const dd = { shared: {} };
@@ -122,6 +123,85 @@ eq(E.display('t', 'Mood: [mood]', { chatID: 0 }), 'Mood: <b>joy</b>\n', 'display
     const seen = [];
     E.display('t', 'x', { chatID: 0 }, { skip: new Set([2]), onScript: i => seen.push(i) });
     eq(seen.join(','), '0,1,4', 'hooks: editdisplay scripts only, skip honored');
+}
+
+// Prompt side (F3b): script passes and {{setvar}} runs.
+ctx({ n: '1' }, {
+    char: {
+        name: 'P', customscript: [
+            { type: 'editinput', in: 'secret', out: '[x]', flag: 'g', ableFlag: false },
+            { type: 'editprocess', in: 'STATUS:.*', out: '', flag: 'g', ableFlag: false },
+        ],
+    },
+    chat: { message: [{ role: 'user', data: 'a' }] },
+});
+eq(E.script('t', 'my secret {{getvar::n}}', { mode: 'editinput', chatID: 1, role: 'user' }), 'my [x] 1', 'script editinput + CBS');
+eq(E.script('t', 'hi {{setvar::n::2}}STATUS: ok', { mode: 'editprocess', chatID: 0, role: 'char', pre: 'history', rmVar: true }), 'hi ', 'script editprocess, setvar dropped');
+eq(E.script('t', 'hi {{setvar::n::2}}', { mode: 'editoutput', chatID: 0, role: 'char' }), 'hi {{setvar::n::2}}', 'editoutput keeps setvar for later');
+{
+    const v = E.runVars('t', [{ text: '{{setvar::n::5}}', chatID: 0 }, { text: '{{addvar::n::2}} {{setvar::m::{{getvar::n}}}}', chatID: 1 }]);
+    eq(JSON.stringify(v), JSON.stringify({ n: '7', m: '7' }), 'runVars in order');
+    eq(E.parse('t', '{{getvar::n}}'), '1', 'runVars does not change the stored context');
+}
+
+// Triggers (F3c): v1 setvar with a condition, v2 loop/if/else, alert input, impersonate.
+{
+    E.setHost({ input: async t => 'typed ' + t, alert: () => {}, warn: () => {} });
+    const trig = [
+        { comment: 's', type: 'start', conditions: [{ type: 'var', var: 'c', value: '', operator: 'null' }],
+            effect: [{ type: 'setvar', var: 'c', value: '10', operator: '=' }] },
+        { comment: 'go', type: 'manual', conditions: [], effect: [
+            { type: 'v2SetVar', var: 'n', value: '0', valueType: 'value', operator: '=', indent: 0 },
+            { type: 'v2LoopNTimes', value: '3', valueType: 'value', indent: 0 },
+            { type: 'v2SetVar', var: 'n', value: '2', valueType: 'value', operator: '+=', indent: 1 },
+            { type: 'v2EndIndent', indent: 1, endOfLoop: true },
+            { type: 'v2If', source: 'n', target: '6', targetType: 'value', condition: '=', indent: 0 },
+            { type: 'v2SetVar', var: 'ok', value: 'yes {{getvar::n}}', valueType: 'value', operator: '=', indent: 1 },
+            { type: 'v2EndIndent', indent: 1 },
+            { type: 'v2Else', indent: 0 },
+            { type: 'v2SetVar', var: 'ok', value: 'no', valueType: 'value', operator: '=', indent: 1 },
+            { type: 'v2EndIndent', indent: 1 },
+            { type: 'v2GetAlertInput', display: 'Name?', displayType: 'value', outputVar: 'nm', indent: 0 },
+            { type: 'v2Impersonate', value: 'I am {{getvar::nm}}', valueType: 'value', role: 'user', indent: 0 },
+        ] },
+    ];
+    E.setCtx('tr', { char: { name: 'T', triggerscript: trig }, chat: { message: [{ role: 'char', data: 'hi' }] }, vars: {} });
+    const a = await E.trigger('tr', 'start', {});
+    eq(a.vars.c, '10', 'start trigger, null condition');
+    const b = await E.trigger('tr', 'manual', { manualName: 'go' });
+    eq(`${b.vars.n}|${b.vars.ok}|${b.vars.nm}`, '6|yes 6|typed Name?', 'v2 loop, if/else, alert input');
+    eq(JSON.stringify(b.messages), JSON.stringify([{ role: 'char', data: 'hi' }, { role: 'user', data: 'I am typed Name?' }]), 'v2Impersonate on the copy');
+}
+
+// Lua (F3d): the extension's own wasmoon (lua-vendor.js + lua/glue.wasm).
+{
+    // In Node the CommonJS branch of wasmoon reads the .wasm with require('fs').
+    new Function('dd', 'require', '__filename', fs.readFileSync(path.join(HERE, '..', 'lua-vendor.js'), 'utf8'))(dd, createRequire(import.meta.url), path.join(HERE, '..', 'lua-vendor.js'));
+    const json = fs.readFileSync(path.join(HERE, '..', 'lua', 'json.lua'), 'utf8');
+    E.setHost({
+        luaFactory: async () => { const f = new dd.shared.wasmoon.LuaFactory(path.join(HERE, '..', 'lua', 'glue.wasm')); await f.mountFile('json.lua', json); return f; },
+        input: async () => 'Ana', alert: () => {}, warn: () => {}, llm: async (m) => 'model:' + m.map(x => x.content).join('|'),
+    });
+    const code = [
+        "function onStart(id) setChatVar(id, 'started', tostring(getChatLength(id))) end",
+        "function lang_ko(id) setChatVar(id, 'lang', 'ko') end",
+        "onButtonClick = async(function(id, data)",
+        "  local name = alertInput(id, 'Name?'):await()",
+        "  addChat(id, 'char', 'Hi ' .. name .. ' (' .. data .. ')')",
+        "end)",
+        "ask = async(function(id) local r = LLM(id, {{role='user', content='q'}}) setChatVar(id, 'llm', r.result) end)",
+        "listenEdit('editOutput', function(id, v) return v .. '!' end)",
+        "listenEdit('editDisplay', function(id, v) return (string.gsub(v, 'cat', 'dog')) end)",
+    ].join('\n');
+    const trig = [{ comment: '', type: 'start', conditions: [], effect: [{ type: 'triggerlua', code }] }];
+    E.setCtx('lua', { char: { name: 'L', triggerscript: trig, lowLevelAccess: true }, chat: { message: [{ role: 'user', data: 'x' }] }, vars: {} });
+    eq((await E.trigger('lua', 'start', {})).vars.started, '1', 'lua onStart');
+    eq((await E.trigger('lua', 'manual', { manualName: 'lang_ko' })).vars.lang, 'ko', 'lua function named after a button');
+    const b = await E.luaButton('lua', 'menu');
+    eq(b.messages[1] && b.messages[1].data, 'Hi Ana (menu)', 'lua onButtonClick with alertInput:await and addChat');
+    eq((await E.trigger('lua', 'manual', { manualName: 'ask' })).vars.llm, 'model:q', 'lua LLM() with low level access');
+    eq((await E.luaEdit('lua', 'editoutput', 'reply', {})).data, 'reply!', 'lua listenEdit editOutput');
+    eq((await E.luaEdit('lua', 'editdisplay', 'a cat', {})).data, 'a dog', 'lua listenEdit editDisplay');
 }
 
 console.log(`engine: ${n - fails}/${n} ok`);

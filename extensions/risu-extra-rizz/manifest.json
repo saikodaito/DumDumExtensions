@@ -4,7 +4,7 @@
     "en": "Risu's extra Rizz",
     "pt": "Risu's extra Rizz"
   },
-  "version": "0.3.0",
+  "version": "0.6.0",
   "api": 2,
   "minApp": "1.30.0",
   "author": "saikodaito",
@@ -22,11 +22,17 @@
   "scripts": [
     "store.js",
     "vars.js",
+    "risum.js",
+    "modules.js",
     "engine.js",
     "display.js",
+    "source.js",
     "importer.js",
     "render.js",
     "scene.js",
+    "scripts.js",
+    "lua-vendor.js",
+    "triggers.js",
     "prompt.js",
     "editor.js",
     "main.js"
@@ -35,7 +41,10 @@
     "style.css"
   ],
   "assets": [
-    "LICENSE"
+    "LICENSE",
+    "lua/glue.wasm",
+    "lua/json.lua",
+    "lua/LICENSE-wasmoon.txt"
   ],
   "i18n": {
     "pt": "i18n/pt.json",
@@ -46,7 +55,10 @@
       "sv.risuai.xyz"
     ],
     "prompt": true,
-    "chatRead": false,
+    "input": true,
+    "chatRead": true,
+    "chatWrite": true,
+    "llm": true,
     "ui": [
       "charEditor",
       "settings",

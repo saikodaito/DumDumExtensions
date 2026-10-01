@@ -49,16 +49,25 @@ function marks(text, lib, seed, where, ctx) {
     });
 }
 
+// RisuAI does not contain a message: a card's position: fixed (Cheongwon's
+// side panels and their buttons) sits on the screen. The app keeps it fixed,
+// held by the chat area, when asked (needs "chatLayer" in permissions.ui).
+const FIXED = /position\s*:\s*fixed/i;
+// A message the card turned into a page of its own (panels, tables, styles)
+// takes the chat's width, as on RisuAI; plain prose keeps the app's bubble.
+const BLOCK = /<(div|table|section|style|details|ul|ol)\b/i;
+
 function render(text, ctx) {
     if (!ctx.charId) return text;
-    let s = text;
+    let s = text, card = false;
     if (dd.shared.cfg.scripts) {
-        try { s = D.text(s, ctx); } catch (e) { dd.warn('display', e); }
+        try { const t = D.text(s, ctx); card = t !== s; s = t; } catch (e) { dd.warn('display', e); }
     }
-    if (!dd.shared.cfg.chat) return s;
-    const lib = S.get(ctx.charId);             // null while it loads: the chat redraws when it lands
-    if (!lib) return s;
-    return marks(s, lib, ctx.chatId + ':' + ctx.msgIndex, 'chat', ctx);
+    const lib = dd.shared.cfg.chat ? S.get(ctx.charId) : null;    // null while it loads: the chat redraws when it lands
+    if (lib) s = marks(s, lib, ctx.chatId + ':' + ctx.msgIndex, 'chat', ctx);
+    if (!card || ctx.streaming) return s;
+    const keepFixed = FIXED.test(s), wide = BLOCK.test(s);
+    return keepFixed || wide ? { text: s, keepFixed, wide } : s;
 }
 
 dd.shared.render = { render, marks };

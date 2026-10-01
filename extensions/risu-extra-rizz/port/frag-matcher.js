@@ -28,7 +28,7 @@
             getGlobalChatVar: getGlobalChatVar,
             calcString: calcString,
             dateTimeFormat: dateTimeFormat,
-            getModules: () => [],
+            getModules: () => (CUR && CUR.modules) || [],
             getModuleLorebooks: () => [],
             pickHashRand: pickHashRand,
             getSelectedCharID: () => 0,

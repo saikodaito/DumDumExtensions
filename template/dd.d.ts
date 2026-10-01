@@ -148,6 +148,67 @@ interface Dd {
          *  without the reasoning. For continue, only the new piece. 3 s limit. Return the
          *  new text; anything that is not a non-empty string keeps the text as it was. */
         transform(fn: (text: string, ctx: DdPromptCtx & { partial?: boolean }) => string | Promise<string>): () => void;
+        /** API 2.1. Called once per reply, before the lorebook is scanned and before the app's
+         *  macros run, with the character's texts and every lorebook entry it can see. Return
+         *  only what changes; it applies to this prompt only (nothing is saved). 2 min limit
+         *  (it may wait for the user, like a card's question).
+         *  lore changes: content, enabled, constant, position ('after_char' | 'before_char' |
+         *  'depth'), depth (messages from the end of the history) and role. */
+        fields(fn: (fields: DdFields, ctx: DdPromptCtx) => DdFieldsChange | null | void
+            | Promise<DdFieldsChange | null | void>): () => void;
+        /** API 2.1. The copy of the history that goes to the model (the reasoning already
+         *  removed). Return one text per message, in order, or null to keep them. 3 s limit. */
+        history(fn: (messages: (DdChatMessage & { index: number })[], ctx: DdPromptCtx) => string[] | null | void
+            | Promise<string[] | null | void>): () => void;
+    };
+
+    /** API 2.1, needs "chatWrite": true in manifest.permissions. Never in a chat that is
+     *  streaming a reply (returns false). Saved and redrawn right away. */
+    chat: {
+        /** New text for message i (the swipe on screen). */
+        edit(chatId: string, index: number, text: string): boolean;
+        /** A message at the end. */
+        add(chatId: string, msg: { role: 'user' | 'assistant'; text: string; charId?: string }): boolean;
+        /** Deletes count messages from i (the greeting, i = 0, stays). */
+        remove(chatId: string, index: number, count?: number): boolean;
+    };
+
+    /** API 2.1: hooks of a card provider (today only 'risurealm'). Your extension decides when
+     *  the provider's full package is used and what the update check compares; downloading
+     *  and opening the package stays with the app. */
+    cards: {
+        source(provider: 'risurealm', h: {
+            /** 'package' = import and preview this card through its package (.charx). */
+            format?(cardId: string, o: { purpose: 'import' | 'preview' }): Promise<'package' | null> | 'package' | null;
+            /** What the update check compares, or null for the app's own path. extra = changes
+             *  only your extension knows (shown in the update list; apply() runs when accepted). */
+            update?(char: { id: string; name: string; originId: string }): Promise<null | {
+                description?: string; firstMessage?: string; scenario?: string; mesExample?: string;
+                systemPrompt?: string; altGreetings?: string[]; characterBook?: any; version?: string;
+                extra?: { key: string; label: string; info?: string; preview?: string }[];
+            }>;
+            apply?(char: { id: string; name: string; originId: string }, key: string): Promise<void>;
+        }): () => void;
+        /** The provider's own data about a card (RisuRealm: the type on its page). */
+        info(provider: 'risurealm', cardId: string): Promise<{ type: string } | null>;
+        /** The package's size without downloading it (null when the server does not say). */
+        packageSize(provider: 'risurealm', cardId: string): Promise<number | null>;
+        /** The whole package, fresh. o.progress shows the app's download window. */
+        package(provider: 'risurealm', cardId: string, o?: { progress?: boolean }): Promise<{ card: any; bytes: number; file(name: string): Promise<Blob | null> }>;
+    };
+
+    /** API 2.1, needs "llm": true in manifest.permissions. One request to the model of the open
+     *  chat's connection (its connection preset included), no streaming; it counts in the
+     *  Usage tab as 'extension'. Resolves with the reply text; throws on errors. */
+    llm: {
+        ask(messages: { role: 'system' | 'user' | 'assistant'; content: string }[], o?: { maxTokens?: number; temperature?: number }): Promise<string>;
+    };
+
+    /** API 2.1, needs "input": true in manifest.permissions. */
+    input: {
+        /** The user's message before it is saved (after the preset's regex). 2 min limit. Return
+         *  the new text; anything that is not a non-empty string keeps it. */
+        transform(fn: (text: string, ctx: { chatId: string; charId: string | null; isGroup: boolean }) => string | Promise<string>): () => void;
     };
 }
 
@@ -158,6 +219,20 @@ interface DdPromptCtx {
     isGroup: boolean;
     /** inject only: the messages before the reply (a copy). */
     history?(): DdChatMessage[];
+}
+
+interface DdLoreEntry {
+    id: string; name: string; content: string; keys: string[]; constant: boolean; enabled: boolean;
+    position: 'after_char' | 'before_char' | 'depth'; depth: number | null; role: 'system' | 'user' | 'assistant' | null;
+}
+interface DdFields {
+    description: string; personality: string; scenario: string; exampleDialogue: string;
+    systemPrompt: string; persona: string; lore: DdLoreEntry[];
+}
+interface DdFieldsChange {
+    description?: string; personality?: string; scenario?: string; exampleDialogue?: string;
+    systemPrompt?: string; persona?: string;
+    lore?: Record<string, Partial<Pick<DdLoreEntry, 'content' | 'enabled' | 'constant' | 'position' | 'depth' | 'role'>>>;
 }
 
 interface DdInjection {
@@ -178,9 +253,17 @@ interface Dd {
      *  SYNCHRONOUS: over 50 ms in one call it is turned off until the app reopens.
      *  The HTML you return is sanitized like the rest of the bubble; blob: URLs are allowed in src. */
     render: {
-        text(fn: (text: string, ctx: DdRenderCtx) => string): () => void;
+        /** API 2.1: fn may return { text, keepFixed, wide } (both need "chatLayer" in
+         *  permissions.ui). keepFixed: position: fixed in that message's CSS is kept, held by the
+         *  chat area instead of the bubble (side panels of RisuAI cards); otherwise fixed and
+         *  sticky become absolute inside the bubble. wide: the message takes the chat's width,
+         *  and the app keeps --dd-chat-vw (1% of that width) on the chat for vw-sized CSS. */
+        text(fn: (text: string, ctx: DdRenderCtx) => string | { text: string; keepFixed?: boolean; wide?: boolean }): () => void;
         /** Redraws the open chat (after loading what your render function uses). */
         refresh(): void;
+        /** API 2.1. A click inside a message of the open chat, on an element that matches the
+         *  selector (inside the HTML your render function returned, for example). */
+        click(selector: string, fn: (e: { chatId: string; msgIndex: number; el: Element }) => void | Promise<void>): () => void;
         /** API 2.1. Redraws one message of the open chat (an async result of yours arrived:
          *  your render function runs again for it). Batched; a streaming message is skipped. */
         redraw(chatId: string, msgIndex: number): void;
@@ -255,6 +338,10 @@ interface DdCharImported {
     file(path: string): Promise<Blob | null>;
     /** Lets the import go on now; your handler may keep working in the background. */
     done(): void;
+    /** API 2.1: the provider's id of the card ('' when not from a provider). */
+    originId: string;
+    /** API 2.1: the size of the package it came in (RisuRealm .charx), 0 when it came as JSON. */
+    packageSize: number;
 }
 
 declare const dd: Dd;

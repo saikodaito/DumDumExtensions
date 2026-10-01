@@ -136,6 +136,42 @@ ${exec}
     }
 `;
 
+// ── triggers.ts: runTrigger (F3c) ────────────────────────────────────────
+const T = strip('src/ts/process/triggers.ts').split('\n');
+const iSafe = T.findIndex(l => l.startsWith('const safeSubset'));
+if (iSafe < 0) throw new Error('triggers.ts: safeSubset');
+let trig = T.slice(iSafe).join('\n');
+trig = patch(trig, 'export const displayAllowList', 'const displayAllowList');
+trig = patch(trig, 'export const requestAllowList', 'const requestAllowList');
+trig = patch(trig, 'export async function runTrigger', 'async function runTrigger');
+if (/^\s*(import|export)\b/m.test(trig)) throw new Error('import/export left in triggers');
+
+// ── scriptings.ts: Lua (F3d) ─────────────────────────────────────────────
+const LS = strip('src/ts/process/scriptings.ts').split('\n');
+const iLua = LS.findIndex(l => l.startsWith('let luaFactory'));
+const iPy = LS.findIndex(l => l.startsWith('class PyodideContext'));
+if (iLua < 0 || iPy < 0) throw new Error('scriptings.ts anchors');
+let lua = LS.slice(iLua, iPy).join('\n');
+lua = patch(lua, 'export async function runScripted', 'async function runScripted');
+lua = patch(lua, 'export async function runLuaEditTrigger', 'async function runLuaEditTrigger');
+lua = patch(lua, 'export async function runLuaButtonTrigger', 'async function runLuaButtonTrigger');
+{
+    const a = lua.indexOf('async function makeLuaFactory(){');
+    const b = lua.indexOf('async function ensureLuaFactory()');
+    if (a < 0 || b < 0 || b < a) throw new Error('makeLuaFactory');
+    lua = lua.slice(0, a) + [
+        '// DumDum: the page builds the factory (wasmoon + RisuAI\'s json.lua).',
+        'async function makeLuaFactory(){',
+        '    luaFactory = await HOST.luaFactory()',
+        '}',
+        '',
+        '',
+    ].join('\n') + lua.slice(b);
+}
+lua = patch(lua, "                console.log('Creating new Lua engine for mode:', mode)\n", '');
+lua = patch(lua, "            console.log('Running Lua code:', code)\n", '');
+if (/^\s*(import|export)\b/m.test(lua)) throw new Error('import/export left in scriptings');
+
 const body = [
     frag('frag-runtime.js'),
     '\n    // ── src/ts/process/infunctions.ts ────────────────────────────────────',
@@ -146,6 +182,11 @@ const body = [
     indent(tidy(parser).trim()),
     frag('frag-matcher.js'),
     tidy(scripts),
+    frag('frag-triggers.js'),
+    '\n    // ── src/ts/process/triggers.ts: runTrigger ───────────────────────────',
+    indent(tidy(trig).trim()),
+    '\n    // ── src/ts/process/scriptings.ts: Lua (runScripted and its API) ──────',
+    indent(tidy(lua).trim()),
     frag('frag-api.js'),
 ].join('\n');
 fs.writeFileSync(OUT, frag('frag-head.js') + body.replace(/[ \t]+$/gm, ''));

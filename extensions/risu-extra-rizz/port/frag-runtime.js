@@ -7,8 +7,8 @@
     const _rand = () => _rng();
 
     // svelte/store `get` + the store of the clicked element's risu-id (trigger_id).
-    const CurrentTriggerIdStore = null;
-    const get = () => (CUR && CUR.triggerId) || null;
+    const CurrentTriggerIdStore = { get: () => (CUR && CUR.triggerId) || null, set: (v) => { if (CUR) CUR.triggerId = v; } };
+    const get = (store) => (store && typeof store.get === 'function') ? store.get() : null;
 
     // The Buffer calls of cbs.ts (base64 and utf-8 only).
     const Buffer = {
@@ -135,7 +135,7 @@
         const db = Object.assign({
             aiModel: '', subModel: '', mainPrompt: '', jailbreak: '', globalNote: '', maxContext: 0,
             language: 'en', jailbreakToggle: false, templateDefaultVariables: '', globalChatVariables: {},
-            promptTemplate: null,
+            promptTemplate: null, personas: [], selectedPersona: 0,
         }, c.db || {});
         db.characters = [char];
         return {
@@ -144,6 +144,9 @@
             globals: Object.assign({}, c.globals || {}),
             user: Object.assign({ name: 'User', persona: '' }, c.user || {}),
             meta: Object.assign({ w: 0, h: 0 }, c.meta || {}),
+            // RisuAI's enabled modules, as {{module_assetlist}} and
+            // {{moduleenabled}} see them: [{ namespace, assets: [[name, path, ext]] }]
+            modules: Array.isArray(c.modules) ? c.modules : [],
             triggerId: null, varsChanged: false,
         };
     }

@@ -28,7 +28,20 @@ function hasOwnInstruction(card) {
     return texts.some(t => typeof t === 'string' && MARK.test(t));
 }
 
-async function onImported({ charId, source, card, file, done }) {
+async function onImported(ev) {
+    const later = { assets: null };
+    try { await importCard(ev, later); }
+    finally {
+        // The embedded module's own images (after the index is written).
+        if (later.assets && later.assets.length) {
+            try { await dd.shared.modules.storeAssets(ev.charId, 'card', later.assets); await S.invalidate(ev.charId); }
+            catch (e) { dd.warn('module assets', e); }
+        }
+    }
+}
+
+async function importCard({ charId, source, card, file, done, originId, packageSize }, later) {
+    dd.shared.source.rememberPackage(charId, source, originId, packageSize, card).catch(e => dd.warn('package', e));
     const raw = (card && Array.isArray(card.assets) ? card.assets : [])
         .filter(a => a && TYPES.has(String(a.type || '').toLowerCase()));
     const risu = card && card.extensions && card.extensions.risuai;
@@ -40,6 +53,18 @@ async function onImported({ charId, source, card, file, done }) {
     if (risu && typeof risu === 'object') {
         try { await folder.put('risuai.json', JSON.stringify(risu), 'application/json'); }
         catch (e) { dd.warn('risuai.json', e); }
+        // .charx: the regex and triggers live only in module.risum.
+        try {
+            const b = await file('module.risum');
+            if (b && b.size) {
+                const bytes = await b.arrayBuffer();
+                const raw = dd.shared.risum.readRisum(bytes);
+                const mod = dd.shared.risum.moduleData(raw);
+                try { later.assets = dd.shared.risum.readRisumAssets(bytes, raw); } catch (e) { dd.warn('module assets', e); }
+                if (later.assets) mod.assetNames = later.assets.map(a => [a.name, '', a.ext]);
+                await folder.put('module.json', JSON.stringify(mod), 'application/json');
+            }
+        } catch (e) { dd.warn('module.risum', e); }
         S.risuForget(charId);
     }
     if (!raw.length) return;

@@ -18,7 +18,23 @@ Without this extension all of that shows up as plain text.
   `{{#if}}`, `{{#when}}`, `{{? 1+2}}` and the rest), the card's display regex,
   its background (`backgroundHTML`, with the CSS the panels use) and its music
   (`{{bgm::name}}`, with a stop button in the chat). Variables are kept per
-  chat, apart from the app's own. Buttons show up but do nothing yet.
+  chat, apart from the app's own.
+- **Triggers** (same setting): the card's triggers run when RisuAI runs them
+  (start of each send, your message, after the reply, and the card's
+  buttons), with their alerts and questions. They can change variables and
+  edit, add or remove chat messages. Lua scripts run on the same Lua engine
+  RisuAI uses (wasmoon), with their edit hooks and buttons.
+- **Low level access**: a card that asks for it (its scripts call the model,
+  which uses tokens) is asked about once per character, when its chat opens;
+  the answer can be changed in the character editor.
+- **On the way to the model** (same setting): the macros in the description,
+  scenario, examples, system prompt and lorebook are resolved at every send
+  (`{{roll}}` rolls again), `{{setvar}}` in the messages updates the
+  variables, the lorebook's `@@depth N` puts the entry N messages from the
+  end, and the card's input, output and history regex run on the text you
+  send, the reply that comes back and the copy of the history.
+- **.charx packages**: the regex and triggers kept in their `module.risum`
+  are read on import (import those cards again to get them).
 - **In the prompt** (optional): cards that do not teach the model how to
   call their images get a short instruction with the real list of names.
   Automatic by default (only when the card brings none), always, or off.
@@ -27,10 +43,13 @@ Without this extension all of that shows up as plain text.
 - **Your data**: kept apart from the app backup. The data button next to the
   extension (Settings > Extensions) exports and imports it.
 
-Not yet: macros in the prompt, triggers and working buttons, Lua, and the
-`.risum` modules inside `.charx` files (where those cards keep their regex).
+Not available: image generation and similarity search from triggers, Lua's
+`request()` (web requests), and scripts that change the character itself
+(name, description, lorebook).
 
 License: AGPL-3.0 (see `LICENSE`). `engine.js` is a port of RisuAI's own code
 (https://github.com/kwaroran/RisuAI, GPL-3.0, by Kwaroran and contributors).
+Lua: wasmoon (MIT, `lua/LICENSE-wasmoon.txt`) and rxi's json.lua (MIT, in
+the file).
 
 Source: [DumDumExtensions](https://github.com/saikodaito/DumDumExtensions)

@@ -62,3 +62,14 @@
 .drx-tag { flex-shrink: 0; font-size: calc(10px * var(--dd-fs-ui)); color: var(--dd-text-3); }
 .drx-gone .drx-name { text-decoration: line-through; opacity: .5; }
 .drx-gone .drx-tag { opacity: .5; }
+/* RisuAI modules added to the character (modules.js). */
+.drx-modules { margin: .5rem 0; display: flex; flex-direction: column; align-items: flex-start; gap: .35rem; }
+.drx-mod-list { align-self: stretch; }
+.drx-mod-name { background: none; border-color: transparent; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* The card's alerts (triggers): message, question, choice. */
+.drx-alert-text { white-space: pre-wrap; font-size: calc(13px * var(--dd-fs-ui)); color: var(--dd-text); margin-bottom: .75rem; }
+.drx-alert-input { width: 100%; margin-bottom: .75rem; }
+.drx-alert-options { display: flex; flex-wrap: wrap; gap: .5rem; }
+.x-risu-button-default, [data-risu-trigger], [data-risu-btn] { cursor: pointer; }
+.drx-low { margin-bottom: .75rem; }

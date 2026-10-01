@@ -79,6 +79,71 @@ function render(root, ctx) {
     details.appendChild(list);
     root.appendChild(details);
 
+    // RisuAI modules added by hand (modules.js): a card's images shipped apart
+    // (Cheongwon's CWHA). Added and removed right away, like RisuAI's module
+    // list; the bytes are big and live outside the editor's Save.
+    const modBox = el('div', 'drx-modules');
+    const modList = el('div', 'drx-mod-list');
+    const modBtn = button(dd.t('editor_module_add'), 'package-plus');
+    const modInp = el('input');
+    modInp.type = 'file';
+    modInp.accept = '*/*';          // Android greys out unknown extensions like .risum
+    modInp.hidden = true;
+    modBtn.addEventListener('click', () => modInp.click());
+    modInp.addEventListener('change', async () => {
+        const f = modInp.files && modInp.files[0];
+        modInp.value = '';
+        if (!f || !ctx.charId) return;
+        modBtn.disabled = true;
+        status.textContent = dd.t('editor_module_reading', { name: f.name, mb: mb(f.size) });
+        try {
+            const e = await dd.shared.modules.add(ctx.charId, await f.arrayBuffer());
+            status.textContent = dd.t('editor_module_added', { name: e.name || f.name, n: e.assets });
+            await load();
+        } catch (x) {
+            status.textContent = dd.t('editor_module_bad', { err: String(x && x.message || x) });
+        } finally { modBtn.disabled = false; paintModules(); }
+    });
+    modBox.append(el('p', 'drx-hint', dd.t('editor_module_hint')), modList, modBtn, modInp);
+    async function paintModules() {
+        modList.textContent = '';
+        if (!ctx.charId) return;
+        for (const m of await dd.shared.modules.list(ctx.charId)) {
+            const line = el('div', 'drx-row');
+            const txt = [m.name || m.key, m.namespace ? '(' + m.namespace + ')' : '', dd.t('editor_module_info', { n: m.assets, regex: m.regex, triggers: m.triggers })].filter(Boolean).join(' ');
+            const del = el('button', 'dd-btn dd-btn--icon dd-btn--sm dd-btn--ghost');
+            del.type = 'button';
+            del.title = dd.t('editor_module_remove');
+            del.appendChild(icon('trash-2'));
+            del.addEventListener('click', async () => {
+                if (!(await dd.ui.confirm(dd.t('editor_module_remove_ask', { name: m.name || m.key })))) return;
+                await dd.shared.modules.remove(ctx.charId, m.key);
+                await load();
+                paintModules();
+            });
+            line.append(el('span', 'drx-name drx-mod-name', txt), del);
+            modList.appendChild(line);
+        }
+        dd.ui.icons(modBox);
+    }
+    details.insertBefore(modBox, list);
+    paintModules().catch(() => {});
+
+    // Low level access (triggers.js): only for cards that ask for it. The
+    // answer given in the chat can be changed here; it applies right away.
+    if (ctx.charId) {
+        S.risuEnsure(ctx.charId).then(async risu => {
+            if (!risu || !risu.lowLevelAccess || !root.isConnected) return;
+            const v = await dd.store.char(ctx.charId).get('lowLevel');
+            const row = dd.ui.toggle({
+                label: { t: 'lbl_low_level' }, desc: { t: 'desc_low_level' }, value: v === true,
+                onChange: on => dd.store.char(ctx.charId).set('lowLevel', !!on),
+            });
+            row.classList.add('drx-low');
+            details.insertBefore(row, bar);
+        }).catch(() => {});
+    }
+
     async function load() {
         st.idx = (await S.readIndex(st.charId)) || { v: 1, source: 'manual', t: Date.now(), skipped: 0, items: [] };
         st.blobs = new Map((await dd.files.char(st.charId).entries('a/')).map(e => [e.name.slice(2), e.blob]));
