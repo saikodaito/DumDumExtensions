@@ -9,10 +9,10 @@
   "usage_hint": "Not in the app backup. Use the data button next to the extension (Settings > Extensions) to export or import it.",
   "toast_reading": "Risu's extra Rizz: reading the card's assets ({n})...",
   "toast_imported": "Risu's extra Rizz: assets of this card: {n} (stored: {stored}, downloaded when used: {remote}).",
-  "toast_skipped": "Risu's extra Rizz: embedded assets left out: {n}.",
-  "ask_big": "This card carries {mb} MB of embedded assets ({n}). Store them for the chat?",
-  "ask_big_ok": "Store",
-  "ask_big_no": "Skip",
+  "toast_skipped": "Risu's extra Rizz: package images discarded: {n}.",
+  "ask_big": "This card comes as a single package, so its {n} images ({mb} MB) were downloaded with it. Keep them on this device for the chat? Without them, the marks stay as written.",
+  "ask_big_ok": "Keep",
+  "ask_big_no": "Discard",
   "ask_continue": "Downloaded {mb} MB so far ({n} of {total}). Keep going?",
   "editor_title": "Assets (Risu)",
   "editor_hint": "Images and sounds the card uses in the chat. Renaming, deleting and adding take effect when you save the character.",
@@ -30,5 +30,11 @@
   "state_new": "new",
   "state_stored": "stored",
   "state_remote": "online",
-  "loading": "Loading..."
+  "loading": "Loading...",
+  "lbl_prompt": "Image instruction in the prompt",
+  "desc_prompt": "Tells the model which images exist and how to call them. Automatic: only for cards that do not bring their own.",
+  "opt_prompt_auto": "Automatic",
+  "opt_prompt_always": "Always",
+  "opt_prompt_off": "Off",
+  "prompt_label": "Images (Risu)"
 }

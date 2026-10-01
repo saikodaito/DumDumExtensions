@@ -1,9 +1,9 @@
 // Risu's extra Rizz: wiring and the settings page.
-// store.js (library) → importer.js (char.imported) → render.js (chat) →
-// editor.js (character editor) → this file.
+// store.js (library) → importer.js (char.imported) →
+// render.js (chat) → prompt.js (image instruction) → editor.js → this file.
 
 const S = dd.shared.store;
-const DEFAULTS = { chat: true, cache: true };
+const DEFAULTS = { chat: true, cache: true, prompt: 'auto' };
 dd.shared.cfg = Object.assign({}, DEFAULTS);
 const offs = [];
 let editorHandle = null;
@@ -16,6 +16,7 @@ dd.onActivate(async () => {
     offs.push(dd.on('char.deleted', e => S.forget(e.charId)));      // the app already cleared the folder
     offs.push(dd.on('data.imported', () => { S.dropAll(); dd.render.refresh(); }));
     offs.push(dd.render.text(dd.shared.render.render));
+    offs.push(dd.prompt.inject(dd.shared.prompt.inject));
     offs.push(dd.ui.slot('charEditor', {
         render(el, ctx) { editorHandle = dd.shared.editor.render(el, ctx); },
         async onSave(ctx) { if (editorHandle) await editorHandle.save(ctx.charId); },
@@ -50,6 +51,12 @@ async function renderSettings(el) {
     sec.appendChild(dd.ui.toggle({
         label: { t: 'lbl_cache' }, desc: { t: 'desc_cache' }, value: dd.shared.cfg.cache,
         onChange: v => setCfg('cache', v),
+    }));
+    sec.appendChild(dd.ui.select({
+        label: { t: 'lbl_prompt' }, desc: { t: 'desc_prompt' },
+        options: ['auto', 'always', 'off'].map(v => ({ value: v, label: { t: 'opt_prompt_' + v } })),
+        value: dd.shared.cfg.prompt,
+        onChange: v => setCfg('prompt', v),
     }));
     el.appendChild(sec);
 

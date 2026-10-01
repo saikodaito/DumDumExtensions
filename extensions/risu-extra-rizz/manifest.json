@@ -4,7 +4,7 @@
     "en": "Risu's extra Rizz",
     "pt": "Risu's extra Rizz"
   },
-  "version": "0.1.0",
+  "version": "0.2.0",
   "api": 2,
   "minApp": "1.30.0",
   "author": "saikodaito",
@@ -22,6 +22,7 @@
     "store.js",
     "importer.js",
     "render.js",
+    "prompt.js",
     "editor.js",
     "main.js"
   ],
@@ -36,7 +37,7 @@
     "network": [
       "sv.risuai.xyz"
     ],
-    "prompt": false,
+    "prompt": true,
     "chatRead": false,
     "ui": [
       "charEditor",

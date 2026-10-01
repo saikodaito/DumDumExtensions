@@ -225,4 +225,12 @@ dd.shared.store = {
     CDN, IMG, AUD, VID, kind, mimeOf, extOf, fileNameFor, hash,
     readIndex, writeIndex, load, get, invalidate, drop, dropAll, pick, urlOf, want, canCache, downloadAll,
     forget: charId => { missing.delete(charId); drop(charId); },
+    /** Async get(): the loaded library, loading it if needed (null when the character has none). */
+    async ensure(charId) {
+        if (!charId || missing.has(charId)) return null;
+        if (libs.has(charId)) return libs.get(charId);
+        const l = await load(charId);
+        if (!l) missing.add(charId);
+        return l;
+    },
 };

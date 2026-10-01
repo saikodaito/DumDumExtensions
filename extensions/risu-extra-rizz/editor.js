@@ -5,7 +5,7 @@
 
 const S = dd.shared.store;
 const GROUPS_MAX = 150;
-const ASK_BYTES = 50 * 1024 * 1024;
+const ASK_BYTES = 10 * 1024 * 1024;     // 10 MB (lowered from 50 MB in 0.2.0)
 const mb = b => (b / 1048576).toFixed(1);
 
 function el(tag, cls, text) {
@@ -198,7 +198,7 @@ function render(root, ctx) {
             const r = await S.downloadAll(st.charId, async (n, total, bytes) => {
                 status.textContent = dd.t('editor_downloading', { n, total, mb: mb(bytes) });
                 // The size of a remote asset is only known after it arrives:
-                // ask once the running total passes 50 MB.
+                // ask once the running total passes 10 MB.
                 if (!asked && bytes >= ASK_BYTES && n < total) {
                     asked = true;
                     return dd.ui.confirm(dd.t('ask_continue', { mb: mb(bytes), n, total }));

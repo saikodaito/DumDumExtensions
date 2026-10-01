@@ -8,13 +8,25 @@
 //    name → URL map is kept; the images are downloaded when they first show
 //    up in the chat (or all at once from the character editor).
 //  - .charx and PNG cards: assets are embedded (embeded://path). file() only
-//    works during this handler, so the bytes are stored now. From 50 MB on the
+//    works during this handler, so the bytes are stored now. From 10 MB on the
 //    user is asked first.
 
 const S = dd.shared.store;
 const TYPES = new Set(['x-risu-asset', 'emotion']);
-const ASK_BYTES = 50 * 1024 * 1024;
+const ASK_BYTES = 10 * 1024 * 1024;     // 10 MB (lowered from 50 MB in 0.2.0)
 const mb = b => (b / 1048576).toFixed(1);
+const MARK = /<img\s*=|\{\{(img|image|asset|emotion)::/i;
+
+/** The card already tells the model how to write the image marks (lorebook,
+ *  description, system prompt...). The greeting does not count: a mark there
+ *  is an example of the result, not an instruction. */
+function hasOwnInstruction(card) {
+    const d = card || {};
+    const texts = [d.description, d.personality, d.scenario, d.system_prompt, d.post_history_instructions, d.mes_example];
+    const book = d.character_book && Array.isArray(d.character_book.entries) ? d.character_book.entries : [];
+    book.forEach(e => texts.push(e && e.content));
+    return texts.some(t => typeof t === 'string' && MARK.test(t));
+}
 
 async function onImported({ charId, source, card, file, done }) {
     const raw = (card && Array.isArray(card.assets) ? card.assets : [])
@@ -50,7 +62,11 @@ async function onImported({ charId, source, card, file, done }) {
         if (embedded.length > 40) dd.ui.toast(dd.t('toast_reading', { n: embedded.length }), 'info');
         const got = [];
         let total = 0;
+        let k = 0;
         for (const e of embedded) {
+            // Give the screen a turn now and then: thousands of awaited reads in a
+            // row never leave the microtask queue, so nothing repaints.
+            if (++k % 25 === 0) await new Promise(r => setTimeout(r, 0));
             let b = null;
             try { b = /^data:/i.test(e.uri) ? await (await dd.net.fetch(e.uri)).blob() : await file(e.uri); }
             catch (x) { dd.warn('asset', e.it.name, x); }
@@ -75,7 +91,11 @@ async function onImported({ charId, source, card, file, done }) {
 
     // What was not stored and has no URL cannot be shown: out of the index.
     const kept = items.filter(it => it.file || it.url);
-    await S.writeIndex(charId, { v: 1, source, t: Date.now(), skipped, items: kept });
+    await S.writeIndex(charId, {
+        v: 1, source, t: Date.now(), skipped, items: kept,
+        ownInstruction: hasOwnInstruction(card),
+        prebuilt: !!(risu && risu.prebuiltAssetCommand),
+    });
     await S.invalidate(charId);
 
     const remote = kept.filter(it => !it.file).length;
