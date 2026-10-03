@@ -10,6 +10,7 @@
 - RisuAI modules (.risum) can be added to a character (Assets section): image modules shipped apart, like Cheongwon's CWHA; {{module_assetlist}} and {{moduleenabled}} work.
 - Messages the card turns into panels take the chat's width, and vw in a card's CSS measures the chat.
 - Faster card buttons: only the messages on screen are processed again and only the changed ones are redrawn; Lua edit hooks run only when the card listens to them.
+- A message whose card scripts gave up (the macro pass ran out of time while the app was busy) is drawn again after 1.5 s and 3 s instead of staying raw until the app restarts.
 
 ## 0.5.0
 

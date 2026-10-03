@@ -18,6 +18,8 @@ const V = dd.shared.vars;
 const SCRIPT_MS = 300;        // one regex of the card, on one message
 const CBS_MS = 2000;          // the CBS pass before the first regex
 const MEMO_MAX = 800;
+const RETRY_MAX = 2;           // a message whose scripts gave up is drawn again this many times
+const RETRY_MS = 1500;         // ... after 1.5 s, then 3 s
 const RISU_VER = '2026.8.250';   // RisuAI version the engine was ported from ({{metadata::version}})
 
 const env = () => ({ local: true, mobile: dd.platform === 'mobile', appVer: RISU_VER });
@@ -319,6 +321,7 @@ const bgHtml = risu => String(risu.backgroundHTML || '') + (risu.moduleBackgroun
 // ── Messages ──────────────────────────────────────────────────────────────
 const memo = new Map();       // chatId|index|role → { text, sig, out }
 const seen = new Map();       // chatId|index|role → the last render context and text (rerun)
+const failed = new Map();     // chatId|index|role → times its scripts gave up (done)
 function memoSet(k, v) {
     memo.delete(k);
     memo.set(k, v);
@@ -354,7 +357,22 @@ function text(src, ctx) {
     // later, asks again with the newer text).
     const k = ctx.streaming ? mk : mk + '|' + X.sig + '|' + src.length + '|' + src.slice(-64);
     const done = out => {
-        if (out == null) { memoSet(mk, { text: src, sig: X.sig, out: src }); return; }
+        if (out == null) {
+            // The engine gave up (the CBS pass ran out of time, usually while the
+            // app is busy: boot, a heavy render). Keeping the raw text as the
+            // result would show the raw card until the session ends, so the
+            // message is drawn again a little later, twice; only a third failure
+            // is kept.
+            const n = (failed.get(mk) || 0) + 1;
+            failed.set(mk, n);
+            if (n <= RETRY_MAX && !ctx.streaming && dd.render.redraw) {
+                setTimeout(() => { if (dd.state.activeChatId() === ctx.chatId) dd.render.redraw(ctx.chatId, i); }, RETRY_MS * n);
+                return;
+            }
+            memoSet(mk, { text: src, sig: X.sig, out: src });
+            return;
+        }
+        failed.delete(mk);
         const prev = memo.get(mk);
         const fin = finish(out);
         memoSet(mk, { text: src, sig: X.sig, out: fin });
@@ -421,6 +439,7 @@ function rerun(chatId) {
 function drop(chatId) {
     for (const k of [...memo.keys()]) if (k.startsWith(chatId + '|')) memo.delete(k);
     for (const k of [...seen.keys()]) if (k.startsWith(chatId + '|')) seen.delete(k);
+    for (const k of [...failed.keys()]) if (k.startsWith(chatId + '|')) failed.delete(k);
     pageSent.delete(chatId);
     if (pageE) pageE.dropCtx(chatId);
     if (W) { W.sent.delete(chatId); try { W.w.postMessage({ t: 'drop', key: chatId }); } catch (e) { /* gone */ } }
@@ -431,6 +450,7 @@ function stop() {
     inflight.clear();
     memo.clear();
     seen.clear();
+    failed.clear();
     ctxMemo = null;
     pageSent.clear();
     pageE = null;
@@ -452,5 +472,5 @@ dd.shared.display = {
     freshCtx() { ctxMemo = null; },
     onSig(fn) { sigListeners.add(fn); return () => sigListeners.delete(fn); },
     /** Forget results (variables or the card changed). */
-    reset() { memo.clear(); ctxMemo = null; },
+    reset() { memo.clear(); failed.clear(); ctxMemo = null; },
 };
