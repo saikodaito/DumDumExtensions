@@ -41,6 +41,8 @@ extensions/<id>/
   README.md             shown in the install banner
   CHANGELOG.md          shown when updating
   test/                 optional, never downloaded by the app
+  port/                 optional, the sources a generated file is rebuilt from
+                        (kept for the license), never downloaded by the app
 template/hello/         a small extension that uses most of the API
 template/pinned-note/   the prompt hooks (dd.prompt.inject / transform)
 template/asset-probe/   API 2: char.imported, dd.render.text, own storage (dd.files)

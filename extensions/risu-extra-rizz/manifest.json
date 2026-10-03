@@ -6,7 +6,7 @@
   },
   "version": "0.6.0",
   "api": 2,
-  "minApp": "1.30.0",
+  "minApp": "1.31.0",
   "author": "saikodaito",
   "license": "AGPL-3.0-only",
   "summary": {
@@ -68,5 +68,30 @@
   "restart": {
     "enable": false,
     "disable": false
+  },
+  "files": {
+    "LICENSE": "0d96a4ff68ad6d4b6f1f30f713b18d5184912ba8dd389f86aa7710db079abcb0",
+    "display.js": "e3d36a29b1df9ab8ef34828cdfdf8d625783f4f2d031831575087f9d6c6d071b",
+    "editor.js": "615af2ed0a071a73d504177d7fe14aba0bca04ebe19c8d45edaa1cc17b2aa016",
+    "engine.js": "dc9fe17e96dfe567e231cee13b37c6bddaacd644b5e84cfe91fb1da51a5b5dd8",
+    "i18n/en.json": "c29e70041f3498a39e2fe66107515f668b457e2f94782f5f1abdb1ebcff6cdb8",
+    "i18n/pt.json": "7f37eb127126b598ac7e4aec52fd335f46ff6365e37e96a76e7a068130d5bff6",
+    "importer.js": "775cc6d246344cd5288e4a656d1e5cd5c207348893690d5775430ffdcfc5c812",
+    "lua-vendor.js": "1567c83e46dbb821944da05251d176893663d66faadb4b5677a6c4ab685cd9cd",
+    "lua/LICENSE-wasmoon.txt": "9ed9226c0138819a0859cf3c55a3414b4a186a17a4eaf4b5a51ceed7937615ac",
+    "lua/glue.wasm": "95f3f19ddb740125883bc41d5ec670cd0828e7b58c8bdad385323cbff497b55c",
+    "lua/json.lua": "a3c0a1693143a6a2aa4a55329733f55f7c1cff28bc3795b66623822c52a4d7a3",
+    "main.js": "81a405a394fea4c26f8553ebe1d25ecbb39b25cf9a9e992db30c58f2b2d26e29",
+    "modules.js": "9fc0f85da8ffea0c744c2d1358a278e7c87ce4abb48c5406ed17744053f5bc23",
+    "prompt.js": "ac4e6662db4f6010f27cbf356fc8284d18a676ba93479c042752d1873852c846",
+    "render.js": "1f9c3b1f9454e58b49f02dfc75ea8e21452229668aa1d9bf9cccb8704cd88b80",
+    "risum.js": "b4b7cee8b3ec07b53e86a7674072fa2d92fe8d8683fd6ead3c3725d91a8984e3",
+    "scene.js": "cb4ef198223352d03e3c6870e598ccb526dbcf8be9335f0dc8d4307ebdbc3045",
+    "scripts.js": "1c5fa42b3c2ef75da6b109ce9e56db2d75248d37be9515bfe9e7ad84aff03f98",
+    "source.js": "17a602cd9243c6d3095bfaf922df8c4e42669eebec13432a5ad4e38fcabcd31a",
+    "store.js": "1c590e0ded0d338f01499a987c1925de8a7e59d77d21a6e4bcec323d432e9f0a",
+    "style.css": "b6ac51054d0d3d9d3b5f48da1cc141e90b8a0e92c2ad28242eac4fe044edaf82",
+    "triggers.js": "ddf635b0aead97b3903ba3c7735e61dea9cedcd0509c14557fdd8aad9b3e1092",
+    "vars.js": "7a095ff01e3970dc52e2ed3766ac7957cf6dec869caff7ffd1449531f0424dfc"
   }
 }

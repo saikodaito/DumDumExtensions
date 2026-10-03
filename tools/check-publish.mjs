@@ -82,14 +82,16 @@ for (const file of files) {
     }
 }
 
-// Every file inside an extension must be declared (or be docs/tests).
+// Every file inside an extension must be declared (or be docs/tests, or the
+// port/ sources a generated file is rebuilt from: kept in the repo for the
+// license, never in the package the app downloads).
 const EXTRAS_OK = new Set(['manifest.json', 'README.md', 'CHANGELOG.md']);
 for (const x of listExtensions()) {
     if (!x.manifest) continue;
     const declared = new Set(filesOf(x.manifest));
     const inside = files.filter(a => a.startsWith(`extensions/${x.id}/`)).map(a => a.slice(`extensions/${x.id}/`.length));
     for (const f of inside) {
-        if (EXTRAS_OK.has(f) || f.startsWith('test/')) continue;
+        if (EXTRAS_OK.has(f) || f.startsWith('test/') || f.startsWith('port/')) continue;
         if (!declared.has(f)) add(`extensions/${x.id}/${f}`, 'not declared in the manifest (remove it or declare it)');
     }
 }
