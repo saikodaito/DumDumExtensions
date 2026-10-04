@@ -40,6 +40,8 @@
   "styles": [
     "style.css"
   ],
+  "icon": "icon.webp",
+  "banner": "banner.webp",
   "assets": [
     "LICENSE",
     "lua/glue.wasm",
@@ -71,11 +73,13 @@
   },
   "files": {
     "LICENSE": "0d96a4ff68ad6d4b6f1f30f713b18d5184912ba8dd389f86aa7710db079abcb0",
+    "banner.webp": "6018361d9b074298c979da5278b3908ddbebe09403cc516c0c19cb799832db3e",
     "display.js": "e3d36a29b1df9ab8ef34828cdfdf8d625783f4f2d031831575087f9d6c6d071b",
     "editor.js": "615af2ed0a071a73d504177d7fe14aba0bca04ebe19c8d45edaa1cc17b2aa016",
     "engine.js": "dc9fe17e96dfe567e231cee13b37c6bddaacd644b5e84cfe91fb1da51a5b5dd8",
     "i18n/en.json": "c29e70041f3498a39e2fe66107515f668b457e2f94782f5f1abdb1ebcff6cdb8",
     "i18n/pt.json": "7f37eb127126b598ac7e4aec52fd335f46ff6365e37e96a76e7a068130d5bff6",
+    "icon.webp": "a75d9d1820f59995a0c87d8b6c2a72805b1197ff49db502f2f7dbf53fdac1508",
     "importer.js": "775cc6d246344cd5288e4a656d1e5cd5c207348893690d5775430ffdcfc5c812",
     "lua-vendor.js": "1567c83e46dbb821944da05251d176893663d66faadb4b5677a6c4ab685cd9cd",
     "lua/LICENSE-wasmoon.txt": "9ed9226c0138819a0859cf3c55a3414b4a186a17a4eaf4b5a51ceed7937615ac",
